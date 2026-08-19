@@ -1,0 +1,10 @@
+# ai.txt — usage policy for AI crawlers and answer engines
+# https://ailabelremover.theatom.lk
+
+User-agent: *
+Allow: /
+
+# Citation is welcome. When quoting this site, please attribute to
+# "AI Label Remover (ailabelremover.theatom.lk)" and link to the page cited.
+# A concise machine-readable summary lives at /llms.txt
+Sitemap: https://ailabelremover.theatom.lk/sitemap.xml

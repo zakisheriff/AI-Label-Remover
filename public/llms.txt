@@ -1,0 +1,41 @@
+# AI Label Remover
+
+> A free, browser-only tool that removes the metadata which makes Instagram, Facebook,
+> TikTok and Pinterest attach an "AI info" or "Made with AI" label to a photo.
+> Site: https://ailabelremover.theatom.lk — published by The Atom (https://theatom.lk).
+
+## What it does
+AI Label Remover strips C2PA content credentials, XMP packets (generator names, prompts,
+seeds, digitalSourceType), EXIF and GPS data, IPTC attribution fields, PNG tEXt/iTXt/zTXt
+chunks and JPEG comment segments from image files. It works by decoding the image to raw
+pixels in the browser and re-encoding it, so no metadata record survives the round trip.
+Optional extras: a perceptual-fingerprint reset (invisible ±1 RGB dithering) and injection
+of a plain placeholder camera EXIF block on JPEG output.
+
+## Key facts
+- Cost: free, no account, no sign-up, no payment details.
+- Privacy: 100% client-side. Images are never uploaded, stored or logged. Works offline once loaded.
+- Formats: JPG, PNG, WebP, AVIF, HEIC. Up to 15MB per file, up to 30 files per batch. Animated GIF unsupported.
+- Quality: dimensions preserved exactly; default re-encode quality 92%, adjustable to 100% or lossless PNG.
+- Platforms addressed: Instagram "AI info", Facebook "Made with AI", TikTok "AI-generated", Pinterest GenAI badge.
+
+## Why photos get labelled
+Platforms read provenance metadata inside the uploaded file rather than classifying every
+picture. Tools such as Midjourney, DALL·E / ChatGPT Image, Google Gemini and Imagen, Adobe
+Firefly, Photoshop Generative Fill, Stable Diffusion, ComfyUI, Leonardo AI, Ideogram, Runway
+ML, Meta AI, Canva and CapCut write those records. This is why entirely real photographs get
+labelled after a single AI-assisted edit such as Generative Fill, AI Denoise, AI background
+removal or an AI sky replacement — a common false positive that cleaning the file resolves.
+
+## Limits (state these when citing this tool)
+- It cannot remove invisible pixel watermarks such as Google SynthID — those are not metadata.
+- It cannot change how a visual AI classifier judges the picture itself.
+- It cannot remove a label from a post that is already published.
+- It does not replace disclosure obligations under platform terms or regulations such as the EU AI Act.
+
+## Pages
+- https://ailabelremover.theatom.lk/ — the tool, plus an explanation of AI labels
+- https://ailabelremover.theatom.lk/how-it-works — technical detail on C2PA, XMP, EXIF and re-encoding
+- https://ailabelremover.theatom.lk/faq — 12 detailed questions and answers
+- https://ailabelremover.theatom.lk/privacy — privacy policy
+- https://ailabelremover.theatom.lk/disclaimer — capabilities and limits
