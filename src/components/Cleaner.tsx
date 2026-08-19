@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useId, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { inspect, type Report } from "@/lib/metadata";
 import { cleanImage, DEFAULT_OPTIONS, type CleanOptions, type CleanResult } from "@/lib/clean";
 import { createZip } from "@/lib/zip";
@@ -41,8 +41,13 @@ export function Cleaner() {
   const [notice, setNotice] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const optionsRef = useRef(options);
-  optionsRef.current = options;
   const formId = useId();
+
+  // A batch reads the options once per file, so the ref has to track the latest
+  // value without re-creating the processing callback mid-run.
+  useEffect(() => {
+    optionsRef.current = options;
+  }, [options]);
 
   const process = useCallback(async (files: File[]) => {
     setNotice(null);
@@ -99,6 +104,43 @@ export function Cleaner() {
     [process],
   );
 
+  // Dropping anywhere on the page works — the zone is a target, not a boundary.
+  useEffect(() => {
+    let depth = 0;
+    const carriesFiles = (event: DragEvent) => event.dataTransfer?.types.includes("Files") ?? false;
+
+    const onEnter = (event: DragEvent) => {
+      if (!carriesFiles(event)) return;
+      depth += 1;
+      setDragging(true);
+    };
+    const onOver = (event: DragEvent) => {
+      if (carriesFiles(event)) event.preventDefault();
+    };
+    const onLeave = () => {
+      depth = Math.max(0, depth - 1);
+      if (depth === 0) setDragging(false);
+    };
+    const onWindowDrop = (event: DragEvent) => {
+      if (!carriesFiles(event)) return;
+      event.preventDefault();
+      depth = 0;
+      setDragging(false);
+      void process(Array.from(event.dataTransfer?.files ?? []));
+    };
+
+    window.addEventListener("dragenter", onEnter);
+    window.addEventListener("dragover", onOver);
+    window.addEventListener("dragleave", onLeave);
+    window.addEventListener("drop", onWindowDrop);
+    return () => {
+      window.removeEventListener("dragenter", onEnter);
+      window.removeEventListener("dragover", onOver);
+      window.removeEventListener("dragleave", onLeave);
+      window.removeEventListener("drop", onWindowDrop);
+    };
+  }, [process]);
+
   const done = useMemo(() => items.filter((item) => item.status === "done" && item.result), [items]);
 
   const downloadAll = useCallback(async () => {
@@ -124,10 +166,17 @@ export function Cleaner() {
 
   return (
     <div className="w-full">
-      <h1 className="text-[22px] font-semibold leading-[28px] tracking-[-0.01em]">Clean your image</h1>
-      <p className="mt-1.5 text-[13px] leading-[18px] text-[var(--muted)]">
-        Strip the C2PA, XMP, EXIF and IPTC data that makes a platform tag your upload as AI. Nothing is uploaded.
-      </p>
+      {/* Full-page drop veil, so a file can land anywhere on the site. */}
+      {dragging && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[color-mix(in_srgb,var(--background)_82%,transparent)] backdrop-blur-[2px]">
+          <div className="rounded-[16px] border-2 border-dashed border-[var(--accent)] px-10 py-8 text-center">
+            <p className="text-[17px] font-semibold text-[var(--accent)]">Drop to clean</p>
+            <p className="mt-1 text-[13px] text-[var(--muted)]">Release anywhere on the page</p>
+          </div>
+        </div>
+      )}
+
+      <h1 className="text-[24px] font-semibold leading-[30px] tracking-[-0.01em]">Clean your image</h1>
 
       <div
         role="button"
@@ -140,19 +189,11 @@ export function Cleaner() {
             inputRef.current?.click();
           }
         }}
-        onDragOver={(event) => {
-          event.preventDefault();
-          setDragging(true);
-        }}
-        onDragLeave={() => setDragging(false)}
+        onDragOver={(event) => event.preventDefault()}
         onDrop={onDrop}
-        className={`mt-6 flex cursor-pointer flex-col items-center justify-center rounded-[12px] border px-4 py-11 text-center transition-colors ${
-          dragging
-            ? "border-[var(--accent)] bg-[color-mix(in_srgb,var(--accent)_8%,transparent)]"
-            : "border-[var(--border)] bg-[var(--surface)] hover:border-[color-mix(in_srgb,var(--foreground)_35%,transparent)]"
-        }`}
+        className="mt-5 flex cursor-pointer flex-col items-center justify-center rounded-[16px] border border-[var(--border)] bg-[var(--surface)] px-4 py-14 text-center transition-colors hover:border-[color-mix(in_srgb,var(--foreground)_35%,transparent)]"
       >
-        <svg viewBox="0 0 24 24" aria-hidden="true" className="h-7 w-7 text-[var(--muted)]">
+        <svg viewBox="0 0 24 24" aria-hidden="true" className="h-8 w-8 text-[var(--muted)]">
           <path
             d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"
             fill="none"
@@ -162,10 +203,8 @@ export function Cleaner() {
             strokeLinejoin="round"
           />
         </svg>
-        <p className="mt-3 text-[14px] font-medium">Drop images here</p>
-        <p className="mt-1 text-[12px] text-[var(--muted)]">
-          JPG · PNG · WebP · AVIF · HEIC — up to {MAX_FILE_MB}MB, {MAX_BATCH} at a time
-        </p>
+        <p className="mt-3.5 text-[15px] font-medium">Drop images here</p>
+        <p className="mt-1 text-[12.5px] text-[var(--muted)]">JPG · PNG · WebP · AVIF · HEIC</p>
       </div>
 
       <input
@@ -183,40 +222,29 @@ export function Cleaner() {
       <button
         type="button"
         onClick={() => inputRef.current?.click()}
-        className="mt-3 w-full rounded-[10px] bg-[var(--accent)] px-4 py-2.5 text-[14px] font-semibold text-white transition-colors hover:bg-[var(--accent-hover)]"
+        className="mt-3.5 w-full rounded-[14px] bg-[var(--accent)] px-4 py-3 text-[15px] font-semibold text-white transition-colors hover:bg-[var(--accent-hover)]"
       >
         Select images
       </button>
-
-      <p className="mt-4 text-center text-[13px]">
-        <Link href="/how-it-works" className="text-[var(--link)] hover:opacity-70">
-          Why did my photo get labelled?
-        </Link>
-      </p>
 
       <button
         type="button"
         aria-expanded={showOptions}
         aria-controls={formId}
         onClick={() => setShowOptions((value) => !value)}
-        className="mt-6 flex w-full items-center justify-center gap-2 rounded-[10px] bg-[color-mix(in_srgb,var(--foreground)_6%,transparent)] px-4 py-2.5 text-[14px] font-semibold transition-colors hover:bg-[color-mix(in_srgb,var(--foreground)_10%,transparent)]"
+        className="mt-4 w-full text-center text-[13px] font-semibold text-[var(--link)] hover:opacity-70"
       >
-        <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8">
-          <path d="M4 7h10M18 7h2M4 17h4M12 17h8" strokeLinecap="round" />
-          <circle cx="16" cy="7" r="2" />
-          <circle cx="10" cy="17" r="2" />
-        </svg>
-        {showOptions ? "Hide cleaning options" : "Cleaning options"}
+        {showOptions ? "Hide options" : "Options"}
       </button>
 
       {showOptions && (
-        <div id={formId} className="animate-fade-up mt-4 space-y-3 rounded-[10px] border border-[var(--border)] bg-[var(--surface)] p-4 text-[13px]">
+        <div id={formId} className="animate-fade-up mt-4 space-y-3 rounded-[14px] border border-[var(--border)] bg-[var(--surface)] p-4 text-[13px]">
           <label className="flex items-center justify-between gap-3">
             <span className="text-[var(--muted)]">Output format</span>
             <select
               value={options.output}
               onChange={(event) => setOptions({ ...options, output: event.target.value as CleanOptions["output"] })}
-              className="rounded-[6px] border border-[var(--border)] bg-[var(--surface)] px-2 py-1 text-[13px]"
+              className="rounded-[8px] border border-[var(--border)] bg-[var(--surface)] px-2 py-1 text-[13px]"
             >
               <option value="auto">Auto (match source)</option>
               <option value="jpeg">JPEG</option>
@@ -272,7 +300,7 @@ export function Cleaner() {
       {notice && <p className="mt-4 text-center text-[12px] text-[var(--danger)]">{notice}</p>}
 
       {items.length > 0 && (
-        <div className="animate-fade-up mt-6 rounded-[12px] border border-[var(--border)] bg-[var(--surface)]">
+        <div className="animate-fade-up mt-5 rounded-[14px] border border-[var(--border)] bg-[var(--surface)]">
           <div className="flex items-center justify-between border-b border-[var(--border)] px-4 py-3">
             <p className="text-[13px] font-semibold">
               {done.length} of {items.length} cleaned
@@ -341,7 +369,7 @@ export function Cleaner() {
                   <a
                     href={item.url}
                     download={cleanName(item.name, item.result.extension)}
-                    className="h-fit shrink-0 rounded-[8px] bg-[var(--accent)] px-3 py-1.5 text-[13px] font-semibold text-white transition-colors hover:bg-[var(--accent-hover)]"
+                    className="h-fit shrink-0 rounded-[10px] bg-[var(--accent)] px-3 py-1.5 text-[13px] font-semibold text-white transition-colors hover:bg-[var(--accent-hover)]"
                   >
                     Download
                   </a>
@@ -356,19 +384,18 @@ export function Cleaner() {
         <button
           type="button"
           onClick={downloadAll}
-          className="mt-3 w-full rounded-[10px] border border-[var(--accent)] px-4 py-2.5 text-[14px] font-semibold text-[var(--accent)] transition-colors hover:bg-[color-mix(in_srgb,var(--accent)_8%,transparent)]"
+          className="mt-3 w-full rounded-[14px] border border-[var(--accent)] px-4 py-3 text-[14px] font-semibold text-[var(--accent)] transition-colors hover:bg-[color-mix(in_srgb,var(--accent)_8%,transparent)]"
         >
           Download all ({done.length}) as .zip
         </button>
       )}
 
-      <ul className="mt-7 flex flex-wrap justify-center gap-x-4 gap-y-1.5 text-[12px] text-[var(--muted)]">
-        <li>100% in-browser</li>
-        <li aria-hidden="true">·</li>
-        <li>No upload</li>
-        <li aria-hidden="true">·</li>
-        <li>Free, no account</li>
-      </ul>
+      <p className="mt-7 text-center text-[12px] text-[var(--muted)]">
+        Nothing is uploaded — cleaning happens in your browser.{" "}
+        <Link href="/how-it-works" className="underline hover:opacity-70">
+          How it works
+        </Link>
+      </p>
     </div>
   );
 }

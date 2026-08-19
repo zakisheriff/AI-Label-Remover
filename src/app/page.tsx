@@ -39,9 +39,9 @@ export default function HomePage() {
 
         <div className="order-3 flex flex-1 flex-col px-6 pb-10 pt-4 lg:order-1 lg:border-r lg:border-[var(--border)] lg:px-14 lg:pt-28">
           <div className="mx-auto flex w-full max-w-[620px] flex-1 flex-col justify-center">
-            <h1 className="mt-8 text-center text-[34px] font-normal leading-[42px] tracking-[-0.02em] sm:text-[44px] sm:leading-[52px]">
+            <h1 className="mt-8 text-balance text-center text-[34px] font-normal leading-[42px] tracking-[-0.02em] sm:text-[44px] sm:leading-[52px]">
               Post your photos without the{" "}
-              <span className="bg-[linear-gradient(90deg,#f9704f,#f0356f,#b83bff)] bg-clip-text font-medium text-transparent">
+              <span className="whitespace-nowrap bg-[linear-gradient(90deg,#f9704f,#f0356f,#b83bff)] bg-clip-text font-medium text-transparent">
                 AI label
               </span>
               .
