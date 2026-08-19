@@ -1,5 +1,6 @@
 "use client";
 
+import gsap from "gsap";
 import Link from "next/link";
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { inspect, type Report } from "@/lib/metadata";
@@ -39,9 +40,53 @@ export function Cleaner() {
   const [showOptions, setShowOptions] = useState(false);
   const [dragging, setDragging] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
+  const [optionsMounted, setOptionsMounted] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const optionsRef = useRef(options);
   const formId = useId();
+
+  // GSAP drives the options panel so it grows and collapses from its real
+  // height instead of popping in and vanishing on unmount. Mounting happens on
+  // the click; unmounting waits for the collapse tween to finish.
+  const toggleOptions = useCallback(() => {
+    setShowOptions((open) => {
+      if (!open) setOptionsMounted(true);
+      return !open;
+    });
+  }, []);
+
+  useEffect(() => {
+    const panel = panelRef.current;
+    if (!panel) return;
+
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const tween = showOptions
+      ? gsap.fromTo(
+          panel,
+          { height: 0, opacity: 0, y: -6 },
+          {
+            height: "auto",
+            opacity: 1,
+            y: 0,
+            duration: reduced ? 0 : 0.42,
+            ease: "power3.out",
+            onComplete: () => gsap.set(panel, { clearProps: "height" }),
+          },
+        )
+      : gsap.to(panel, {
+          height: 0,
+          opacity: 0,
+          y: -6,
+          duration: reduced ? 0 : 0.3,
+          ease: "power2.inOut",
+          onComplete: () => setOptionsMounted(false),
+        });
+
+    return () => {
+      tween.kill();
+    };
+  }, [showOptions, optionsMounted]);
 
   // A batch reads the options once per file, so the ref has to track the latest
   // value without re-creating the processing callback mid-run.
@@ -191,7 +236,7 @@ export function Cleaner() {
         }}
         onDragOver={(event) => event.preventDefault()}
         onDrop={onDrop}
-        className="mt-5 flex cursor-pointer flex-col items-center justify-center rounded-[16px] border border-[var(--border)] bg-[var(--surface)] px-4 py-14 text-center transition-colors hover:border-[color-mix(in_srgb,var(--foreground)_35%,transparent)]"
+        className="mt-5 flex cursor-pointer flex-col items-center justify-center rounded-[25px] border border-[var(--border)] bg-[var(--surface)] px-4 py-14 text-center transition-colors hover:border-[color-mix(in_srgb,var(--foreground)_35%,transparent)]"
       >
         <svg viewBox="0 0 24 24" aria-hidden="true" className="h-8 w-8 text-[var(--muted)]">
           <path
@@ -222,7 +267,7 @@ export function Cleaner() {
       <button
         type="button"
         onClick={() => inputRef.current?.click()}
-        className="mt-3.5 w-full rounded-[14px] bg-[var(--accent)] px-4 py-3 text-[15px] font-semibold text-white transition-colors hover:bg-[var(--accent-hover)]"
+        className="mt-3.5 w-full cursor-pointer rounded-[35px] bg-[var(--accent)] px-4 py-3.5 text-[15px] font-semibold text-white transition-colors hover:bg-[var(--accent-hover)]"
       >
         Select images
       </button>
@@ -231,14 +276,15 @@ export function Cleaner() {
         type="button"
         aria-expanded={showOptions}
         aria-controls={formId}
-        onClick={() => setShowOptions((value) => !value)}
-        className="mt-4 w-full text-center text-[13px] font-semibold text-[var(--link)] hover:opacity-70"
+        onClick={toggleOptions}
+        className="mt-4 w-full cursor-pointer text-center text-[13px] font-semibold text-[var(--link)] hover:opacity-70"
       >
         {showOptions ? "Hide options" : "Options"}
       </button>
 
-      {showOptions && (
-        <div id={formId} className="animate-fade-up mt-4 space-y-3 rounded-[14px] border border-[var(--border)] bg-[var(--surface)] p-4 text-[13px]">
+      {optionsMounted && (
+        <div ref={panelRef} className="overflow-hidden">
+          <div id={formId} className="mt-4 space-y-3 rounded-[14px] border border-[var(--border)] bg-[var(--surface)] p-4 text-[13px]">
           <label className="flex items-center justify-between gap-3">
             <span className="text-[var(--muted)]">Output format</span>
             <select
@@ -294,6 +340,7 @@ export function Cleaner() {
               </span>
             </span>
           </label>
+          </div>
         </div>
       )}
 
@@ -330,7 +377,7 @@ export function Cleaner() {
                   {item.status === "done" && item.report && item.result && (
                     <>
                       <p className="mt-1 text-[12px] text-[var(--muted)]">
-                        {item.report.format} {formatBytes(item.size)} → {item.result.extension.toUpperCase()}{" "}
+                        {item.report.format} {formatBytes(item.size)} to {item.result.extension.toUpperCase()}{" "}
                         {formatBytes(item.result.blob.size)} · {item.result.width}×{item.result.height}
                       </p>
 
@@ -369,7 +416,7 @@ export function Cleaner() {
                   <a
                     href={item.url}
                     download={cleanName(item.name, item.result.extension)}
-                    className="h-fit shrink-0 rounded-[10px] bg-[var(--accent)] px-3 py-1.5 text-[13px] font-semibold text-white transition-colors hover:bg-[var(--accent-hover)]"
+                    className="h-fit shrink-0 cursor-pointer rounded-[35px] bg-[var(--accent)] px-3.5 py-1.5 text-[13px] font-semibold text-white transition-colors hover:bg-[var(--accent-hover)]"
                   >
                     Download
                   </a>
@@ -384,14 +431,14 @@ export function Cleaner() {
         <button
           type="button"
           onClick={downloadAll}
-          className="mt-3 w-full rounded-[14px] border border-[var(--accent)] px-4 py-3 text-[14px] font-semibold text-[var(--accent)] transition-colors hover:bg-[color-mix(in_srgb,var(--accent)_8%,transparent)]"
+          className="mt-3 w-full cursor-pointer rounded-[35px] border border-[var(--accent)] px-4 py-3.5 text-[14px] font-semibold text-[var(--accent)] transition-colors hover:bg-[color-mix(in_srgb,var(--accent)_8%,transparent)]"
         >
           Download all ({done.length}) as .zip
         </button>
       )}
 
       <p className="mt-7 text-center text-[12px] text-[var(--muted)]">
-        Nothing is uploaded — cleaning happens in your browser.{" "}
+        Nothing is uploaded, cleaning happens in your browser.{" "}
         <Link href="/how-it-works" className="underline hover:opacity-70">
           How it works
         </Link>
