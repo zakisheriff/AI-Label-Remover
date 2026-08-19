@@ -1,0 +1,374 @@
+"use client";
+
+import Link from "next/link";
+import { useCallback, useId, useMemo, useRef, useState } from "react";
+import { inspect, type Report } from "@/lib/metadata";
+import { cleanImage, DEFAULT_OPTIONS, type CleanOptions, type CleanResult } from "@/lib/clean";
+import { createZip } from "@/lib/zip";
+import { MAX_BATCH, MAX_FILE_MB } from "@/lib/site";
+
+type Status = "queued" | "working" | "done" | "error";
+
+type Item = {
+  id: string;
+  name: string;
+  size: number;
+  status: Status;
+  report?: Report;
+  result?: CleanResult;
+  url?: string;
+  error?: string;
+};
+
+const ACCEPT = "image/jpeg,image/png,image/webp,image/avif,image/heic,image/heif";
+
+function formatBytes(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(0)} KB`;
+  return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+}
+
+function cleanName(name: string, extension: string) {
+  const base = name.replace(/\.[^.]+$/, "").slice(0, 60);
+  return `${base}-clean.${extension}`;
+}
+
+export function Cleaner() {
+  const [items, setItems] = useState<Item[]>([]);
+  const [options, setOptions] = useState<CleanOptions>(DEFAULT_OPTIONS);
+  const [showOptions, setShowOptions] = useState(false);
+  const [dragging, setDragging] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const optionsRef = useRef(options);
+  optionsRef.current = options;
+  const formId = useId();
+
+  const process = useCallback(async (files: File[]) => {
+    setNotice(null);
+    const images = files.filter((file) => file.type.startsWith("image/") || /\.(jpe?g|png|webp|avif|heic|heif)$/i.test(file.name));
+    if (!images.length) {
+      setNotice("Those files are not images. Use JPG, PNG, WebP, AVIF or HEIC.");
+      return;
+    }
+    if (images.some((file) => /\.gif$/i.test(file.name))) {
+      setNotice("Animated GIF is not supported — only the first frame would survive re-encoding.");
+    }
+
+    const accepted = images.slice(0, MAX_BATCH);
+    if (images.length > MAX_BATCH) setNotice(`Only the first ${MAX_BATCH} images were added.`);
+
+    const queued: Item[] = accepted.map((file, index) => ({
+      id: `${Date.now()}-${index}-${file.name}`,
+      name: file.name,
+      size: file.size,
+      status: "queued",
+    }));
+    setItems((prev) => [...queued, ...prev]);
+
+    for (let i = 0; i < accepted.length; i++) {
+      const file = accepted[i];
+      const id = queued[i].id;
+      const update = (patch: Partial<Item>) =>
+        setItems((prev) => prev.map((item) => (item.id === id ? { ...item, ...patch } : item)));
+
+      if (file.size > MAX_FILE_MB * 1024 * 1024) {
+        update({ status: "error", error: `Larger than ${MAX_FILE_MB}MB.` });
+        continue;
+      }
+
+      update({ status: "working" });
+      try {
+        const report = inspect(await file.arrayBuffer());
+        const result = await cleanImage(file, optionsRef.current);
+        update({ status: "done", report, result, url: URL.createObjectURL(result.blob) });
+      } catch (error) {
+        update({ status: "error", error: error instanceof Error ? error.message : "Could not process this file." });
+      }
+      // Yield between files so the browser can paint progress on a large batch.
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    }
+  }, []);
+
+  const onDrop = useCallback(
+    (event: React.DragEvent) => {
+      event.preventDefault();
+      setDragging(false);
+      void process(Array.from(event.dataTransfer.files));
+    },
+    [process],
+  );
+
+  const done = useMemo(() => items.filter((item) => item.status === "done" && item.result), [items]);
+
+  const downloadAll = useCallback(async () => {
+    const entries = await Promise.all(
+      done.map(async (item) => ({
+        name: cleanName(item.name, item.result!.extension),
+        data: new Uint8Array(await item.result!.blob.arrayBuffer()),
+      })),
+    );
+    const url = URL.createObjectURL(createZip(entries));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "ai-label-remover-clean.zip";
+    link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 30_000);
+  }, [done]);
+
+  const reset = useCallback(() => {
+    items.forEach((item) => item.url && URL.revokeObjectURL(item.url));
+    setItems([]);
+    setNotice(null);
+  }, [items]);
+
+  return (
+    <div className="w-full">
+      <h1 className="text-[22px] font-semibold leading-[28px] tracking-[-0.01em]">Clean your image</h1>
+      <p className="mt-1.5 text-[13px] leading-[18px] text-[var(--muted)]">
+        Strip the C2PA, XMP, EXIF and IPTC data that makes a platform tag your upload as AI. Nothing is uploaded.
+      </p>
+
+      <div
+        role="button"
+        tabIndex={0}
+        aria-label="Drop images here or press Enter to browse"
+        onClick={() => inputRef.current?.click()}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            inputRef.current?.click();
+          }
+        }}
+        onDragOver={(event) => {
+          event.preventDefault();
+          setDragging(true);
+        }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={onDrop}
+        className={`mt-6 flex cursor-pointer flex-col items-center justify-center rounded-[12px] border px-4 py-11 text-center transition-colors ${
+          dragging
+            ? "border-[var(--accent)] bg-[color-mix(in_srgb,var(--accent)_8%,transparent)]"
+            : "border-[var(--border)] bg-[var(--surface)] hover:border-[color-mix(in_srgb,var(--foreground)_35%,transparent)]"
+        }`}
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true" className="h-7 w-7 text-[var(--muted)]">
+          <path
+            d="M12 16V4m0 0L7.5 8.5M12 4l4.5 4.5M4 15v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.6"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+        <p className="mt-3 text-[14px] font-medium">Drop images here</p>
+        <p className="mt-1 text-[12px] text-[var(--muted)]">
+          JPG · PNG · WebP · AVIF · HEIC — up to {MAX_FILE_MB}MB, {MAX_BATCH} at a time
+        </p>
+      </div>
+
+      <input
+        ref={inputRef}
+        type="file"
+        accept={ACCEPT}
+        multiple
+        className="sr-only"
+        onChange={(event) => {
+          void process(Array.from(event.target.files ?? []));
+          event.target.value = "";
+        }}
+      />
+
+      <button
+        type="button"
+        onClick={() => inputRef.current?.click()}
+        className="mt-3 w-full rounded-[10px] bg-[var(--accent)] px-4 py-2.5 text-[14px] font-semibold text-white transition-colors hover:bg-[var(--accent-hover)]"
+      >
+        Select images
+      </button>
+
+      <p className="mt-4 text-center text-[13px]">
+        <Link href="/how-it-works" className="text-[var(--link)] hover:opacity-70">
+          Why did my photo get labelled?
+        </Link>
+      </p>
+
+      <button
+        type="button"
+        aria-expanded={showOptions}
+        aria-controls={formId}
+        onClick={() => setShowOptions((value) => !value)}
+        className="mt-6 flex w-full items-center justify-center gap-2 rounded-[10px] bg-[color-mix(in_srgb,var(--foreground)_6%,transparent)] px-4 py-2.5 text-[14px] font-semibold transition-colors hover:bg-[color-mix(in_srgb,var(--foreground)_10%,transparent)]"
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8">
+          <path d="M4 7h10M18 7h2M4 17h4M12 17h8" strokeLinecap="round" />
+          <circle cx="16" cy="7" r="2" />
+          <circle cx="10" cy="17" r="2" />
+        </svg>
+        {showOptions ? "Hide cleaning options" : "Cleaning options"}
+      </button>
+
+      {showOptions && (
+        <div id={formId} className="animate-fade-up mt-4 space-y-3 rounded-[10px] border border-[var(--border)] bg-[var(--surface)] p-4 text-[13px]">
+          <label className="flex items-center justify-between gap-3">
+            <span className="text-[var(--muted)]">Output format</span>
+            <select
+              value={options.output}
+              onChange={(event) => setOptions({ ...options, output: event.target.value as CleanOptions["output"] })}
+              className="rounded-[6px] border border-[var(--border)] bg-[var(--surface)] px-2 py-1 text-[13px]"
+            >
+              <option value="auto">Auto (match source)</option>
+              <option value="jpeg">JPEG</option>
+              <option value="png">PNG (lossless)</option>
+              <option value="webp">WebP</option>
+            </select>
+          </label>
+
+          <label className="flex items-center justify-between gap-3">
+            <span className="text-[var(--muted)]">Quality — {Math.round(options.quality * 100)}%</span>
+            <input
+              type="range"
+              min={60}
+              max={100}
+              value={Math.round(options.quality * 100)}
+              onChange={(event) => setOptions({ ...options, quality: Number(event.target.value) / 100 })}
+              className="w-32 accent-[var(--accent)]"
+            />
+          </label>
+
+          <label className="flex items-start gap-2">
+            <input
+              type="checkbox"
+              checked={options.resetFingerprint}
+              onChange={(event) => setOptions({ ...options, resetFingerprint: event.target.checked })}
+              className="mt-[3px] accent-[var(--accent)]"
+            />
+            <span>
+              Reset perceptual fingerprint
+              <span className="block text-[12px] text-[var(--muted)]">
+                Invisible ±1 RGB shift so the file no longer matches earlier copies.
+              </span>
+            </span>
+          </label>
+
+          <label className="flex items-start gap-2">
+            <input
+              type="checkbox"
+              checked={options.injectCameraExif}
+              onChange={(event) => setOptions({ ...options, injectCameraExif: event.target.checked })}
+              className="mt-[3px] accent-[var(--accent)]"
+            />
+            <span>
+              Add placeholder camera EXIF
+              <span className="block text-[12px] text-[var(--muted)]">
+                Writes a plain camera block after cleaning. JPEG output only.
+              </span>
+            </span>
+          </label>
+        </div>
+      )}
+
+      {notice && <p className="mt-4 text-center text-[12px] text-[var(--danger)]">{notice}</p>}
+
+      {items.length > 0 && (
+        <div className="animate-fade-up mt-6 rounded-[12px] border border-[var(--border)] bg-[var(--surface)]">
+          <div className="flex items-center justify-between border-b border-[var(--border)] px-4 py-3">
+            <p className="text-[13px] font-semibold">
+              {done.length} of {items.length} cleaned
+            </p>
+            <button type="button" onClick={reset} className="text-[13px] font-semibold text-[var(--muted)] hover:opacity-70">
+              Clear
+            </button>
+          </div>
+
+          <ul className="max-h-[420px] overflow-y-auto">
+            {items.map((item) => (
+              <li key={item.id} className="flex gap-3 border-b border-[var(--border)] p-4 last:border-b-0">
+                <div className="h-14 w-14 shrink-0 overflow-hidden rounded-[6px] border border-[var(--border)] bg-[color-mix(in_srgb,var(--foreground)_5%,transparent)]">
+                  {item.url && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={item.url} alt="" className="h-full w-full object-cover" />
+                  )}
+                </div>
+
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-[13px] font-medium">{item.name}</p>
+
+                  {item.status === "working" && <p className="mt-1 text-[12px] text-[var(--muted)]">Cleaning…</p>}
+                  {item.status === "queued" && <p className="mt-1 text-[12px] text-[var(--muted)]">Queued</p>}
+                  {item.status === "error" && <p className="mt-1 text-[12px] text-[var(--danger)]">{item.error}</p>}
+
+                  {item.status === "done" && item.report && item.result && (
+                    <>
+                      <p className="mt-1 text-[12px] text-[var(--muted)]">
+                        {item.report.format} {formatBytes(item.size)} → {item.result.extension.toUpperCase()}{" "}
+                        {formatBytes(item.result.blob.size)} · {item.result.width}×{item.result.height}
+                      </p>
+
+                      {item.report.findings.length > 0 ? (
+                        <ul className="mt-2 flex flex-wrap gap-1.5">
+                          {item.report.findings.map((finding) => (
+                            <li
+                              key={finding.kind + finding.detail}
+                              title={finding.detail}
+                              className={`rounded-full px-2 py-0.5 text-[11px] font-medium line-through ${
+                                finding.aiRelated
+                                  ? "bg-[color-mix(in_srgb,var(--danger)_12%,transparent)] text-[var(--danger)]"
+                                  : "bg-[color-mix(in_srgb,var(--foreground)_7%,transparent)] text-[var(--muted)]"
+                              }`}
+                            >
+                              {finding.kind}
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p className="mt-2 text-[12px] text-[var(--muted)]">
+                          No embedded metadata found — the file was re-encoded anyway.
+                        </p>
+                      )}
+
+                      {item.report.generators.length > 0 && (
+                        <p className="mt-2 text-[11px] text-[var(--muted)]">
+                          Signature detected: {item.report.generators.join(", ")}
+                        </p>
+                      )}
+                    </>
+                  )}
+                </div>
+
+                {item.status === "done" && item.url && item.result && (
+                  <a
+                    href={item.url}
+                    download={cleanName(item.name, item.result.extension)}
+                    className="h-fit shrink-0 rounded-[8px] bg-[var(--accent)] px-3 py-1.5 text-[13px] font-semibold text-white transition-colors hover:bg-[var(--accent-hover)]"
+                  >
+                    Download
+                  </a>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {done.length > 1 && (
+        <button
+          type="button"
+          onClick={downloadAll}
+          className="mt-3 w-full rounded-[10px] border border-[var(--accent)] px-4 py-2.5 text-[14px] font-semibold text-[var(--accent)] transition-colors hover:bg-[color-mix(in_srgb,var(--accent)_8%,transparent)]"
+        >
+          Download all ({done.length}) as .zip
+        </button>
+      )}
+
+      <ul className="mt-7 flex flex-wrap justify-center gap-x-4 gap-y-1.5 text-[12px] text-[var(--muted)]">
+        <li>100% in-browser</li>
+        <li aria-hidden="true">·</li>
+        <li>No upload</li>
+        <li aria-hidden="true">·</li>
+        <li>Free, no account</li>
+      </ul>
+    </div>
+  );
+}

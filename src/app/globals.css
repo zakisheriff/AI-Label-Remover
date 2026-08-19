@@ -1,26 +1,113 @@
 @import "tailwindcss";
 
+/* Instagram-derived neutral palette: near-white ground, hairline borders, one blue accent. */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --background: #fafafa;
+  --surface: #ffffff;
+  --foreground: #262626;
+  --muted: #737373;
+  --border: #dbdbdb;
+  --accent: #0095f6;
+  --accent-hover: #1877f2;
+  --link: #00376b;
+  --danger: #ed4956;
+  --success: #2f9e44;
 }
 
 @theme inline {
   --color-background: var(--background);
+  --color-surface: var(--surface);
   --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-line: var(--border);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-link: var(--link);
+  --color-danger: var(--danger);
+  --color-success: var(--success);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #000000;
+    --surface: #0a0a0a;
+    --foreground: #f5f5f5;
+    --muted: #a8a8a8;
+    --border: #262626;
+    --link: #a6c8ff;
   }
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--accent);
+  color: #fff;
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.animate-fade-up {
+  animation: fade-up 0.28s ease-out both;
+}
+
+@keyframes label-strike {
+  0%, 42% {
+    opacity: 1;
+    filter: none;
+  }
+  58%, 100% {
+    opacity: 0;
+    filter: blur(3px);
+  }
+}
+
+@keyframes label-clear {
+  0%, 46% {
+    opacity: 0;
+    transform: translateY(3px);
+  }
+  62%, 100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes sweep {
+  0% {
+    transform: translateY(-110%);
+  }
+  45%, 100% {
+    transform: translateY(320%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  .animate-fade-up,
+  [data-anim] {
+    animation: none !important;
+  }
 }
