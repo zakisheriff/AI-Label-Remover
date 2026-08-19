@@ -132,7 +132,7 @@ ai-label-remover/
 ├── public/                         # Static images and crawler-readable content
 │   ├── ai.txt                      # AI crawler usage policy
 │   ├── llms.txt                    # Answer-engine summary
-│   ├── hero-collage.webp           # Homepage artwork
+│   ├── hero-collage-2.webp         # Homepage artwork
 │   ├── website-logo.webp           # Primary site logo
 │   └── icon-192.png                # PWA and app icons
 │

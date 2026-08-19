@@ -48,10 +48,10 @@ export default function HomePage() {
             </h1>
 
             <Image
-              src="/hero-collage.webp"
+              src="/hero-collage-2.webp"
               alt="Instagram posts published without an AI label"
-              width={1632}
-              height={1310}
+              width={1536}
+              height={1024}
               priority
               className="mt-6 h-auto w-full max-w-[520px] self-center"
             />
