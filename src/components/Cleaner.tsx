@@ -221,7 +221,9 @@ export function Cleaner() {
         </div>
       )}
 
-      <h1 className="text-[24px] font-semibold leading-[30px] tracking-[-0.01em]">Clean your image</h1>
+      <h1 className="text-[19px] font-semibold leading-[26px] tracking-[-0.01em] sm:text-[24px] sm:leading-[30px]">
+        Clean your image
+      </h1>
 
       <div
         role="button"

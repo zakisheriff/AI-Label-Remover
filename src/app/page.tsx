@@ -25,7 +25,7 @@ export default function HomePage() {
           right behind a full-height hairline divider. The form is the tool. */}
       <section className="relative flex min-h-[100svh] flex-col lg:flex-row">
         {/* Logo sits top-left of the split on desktop, above the tool on phones. */}
-        <div className="order-1 px-6 pt-8 lg:absolute lg:left-14 lg:top-10 lg:z-10 lg:px-0 lg:pt-0">
+        <div className="order-1 flex justify-center px-6 pt-8 lg:absolute lg:left-14 lg:top-10 lg:z-10 lg:block lg:px-0 lg:pt-0">
           <Image
             src="/website-logo.webp"
             alt={site.name}
@@ -37,7 +37,7 @@ export default function HomePage() {
           />
         </div>
 
-        <div className="order-3 flex flex-1 flex-col px-6 pb-10 pt-4 lg:order-1 lg:border-r lg:border-[var(--border)] lg:px-14 lg:pt-28">
+        <div className="order-3 flex flex-1 flex-col px-6 pb-10 pt-4 lg:order-1 lg:px-14 lg:pt-28">
           <div className="mx-auto flex w-full max-w-[620px] flex-1 flex-col justify-center">
             <h1 className="mt-8 text-balance text-center text-[34px] font-normal leading-[42px] tracking-[-0.02em] sm:text-[44px] sm:leading-[52px]">
               Post your photos without the{" "}
