@@ -53,7 +53,7 @@ export default function DisclaimerPage() {
 
         <p className="mt-8 text-[14px]">
           <Link href="/" className="text-[var(--link)] underline">
-            ← Back to the tool
+            Back to the tool
           </Link>
         </p>
       </PageShell>

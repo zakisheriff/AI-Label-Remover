@@ -147,7 +147,7 @@ export default function HomePage() {
           </div>
           <p className="mt-5 text-[14px]">
             <Link href="/faq" className="text-[var(--link)] underline">
-              All {faqs.length} questions →
+              All {faqs.length} questions
             </Link>
           </p>
         </section>
