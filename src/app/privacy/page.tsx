@@ -27,9 +27,8 @@ export default function PrivacyPage() {
 
           <h2>Analytics and cookies</h2>
           <p>
-            This site sets no cookies and runs no advertising or fingerprinting scripts. If privacy-preserving,
-            aggregate traffic analytics are added in future, they will count page views only and will never receive
-            information about the files you process.
+            This site uses Vercel Web Analytics to measure aggregate page visits and navigation. It does not use cookies,
+            advertising or fingerprinting scripts, and it never receives information about the files you process.
           </p>
 
           <h2>Hosting logs</h2>

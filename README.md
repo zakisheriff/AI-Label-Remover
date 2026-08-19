@@ -1,4 +1,6 @@
-# <div align="center">AI Label Remover</div>
+<div align="center">
+<img src="public/website-logo.webp" alt="AI Label Remover" width="360" />
+</div>
 
 <div align="center">
 <strong>Free, Private, Browser-Only AI Metadata Remover for Images</strong>
