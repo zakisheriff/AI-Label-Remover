@@ -51,6 +51,14 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Tailwind v4 drops the UA pointer cursor on buttons — put it back everywhere. */
+button:not(:disabled),
+summary,
+label:has(input[type="checkbox"]),
+[role="button"] {
+  cursor: pointer;
+}
+
 ::selection {
   background: var(--accent);
   color: #fff;
@@ -71,43 +79,11 @@ body {
   animation: fade-up 0.28s ease-out both;
 }
 
-@keyframes label-strike {
-  0%, 42% {
-    opacity: 1;
-    filter: none;
-  }
-  58%, 100% {
-    opacity: 0;
-    filter: blur(3px);
-  }
-}
-
-@keyframes label-clear {
-  0%, 46% {
-    opacity: 0;
-    transform: translateY(3px);
-  }
-  62%, 100% {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-@keyframes sweep {
-  0% {
-    transform: translateY(-110%);
-  }
-  45%, 100% {
-    transform: translateY(320%);
-  }
-}
-
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
   }
-  .animate-fade-up,
-  [data-anim] {
+  .animate-fade-up {
     animation: none !important;
   }
 }
