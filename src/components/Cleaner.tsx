@@ -439,7 +439,7 @@ export function Cleaner() {
         </button>
       )}
 
-      <p className="mt-7 text-center text-[12px] text-[var(--muted)]">
+      <p className="mt-7 hidden text-center text-[12px] text-[var(--muted)] lg:block">
         Nothing is uploaded, cleaning happens in your browser.{" "}
         <Link href="/how-it-works" className="underline hover:opacity-70">
           How it works

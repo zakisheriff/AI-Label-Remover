@@ -55,6 +55,13 @@ export default function HomePage() {
               priority
               className="mt-6 h-auto w-full max-w-[520px] self-center"
             />
+
+            <p className="mt-5 text-center text-[12px] text-[var(--muted)] lg:hidden">
+              Nothing is uploaded, cleaning happens in your browser.{" "}
+              <Link href="/how-it-works" className="underline hover:opacity-70">
+                How it works
+              </Link>
+            </p>
           </div>
         </div>
 
