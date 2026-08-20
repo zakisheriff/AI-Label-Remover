@@ -35,7 +35,7 @@ export default function BlogListingPage() {
                 href={`/blog/${post.slug}`}
                 className="text-[13px] font-semibold text-[var(--link)] hover:underline"
               >
-                Read article &rarr;
+                Read article
               </Link>
             </div>
           </article>

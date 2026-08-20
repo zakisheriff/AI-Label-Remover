@@ -228,7 +228,7 @@ export function Cleaner() {
       <div
         role="button"
         tabIndex={0}
-        aria-label="Drop images here or press Enter to browse"
+        aria-label="Select images or press Enter to browse"
         onClick={() => inputRef.current?.click()}
         onKeyDown={(event) => {
           if (event.key === "Enter" || event.key === " ") {
@@ -250,7 +250,8 @@ export function Cleaner() {
             strokeLinejoin="round"
           />
         </svg>
-        <p className="mt-3.5 text-[15px] font-medium">Drop images here</p>
+        <p className="mt-3.5 text-[15px] font-medium hidden sm:block">Select or drop images</p>
+        <p className="mt-3.5 text-[15px] font-medium sm:hidden">Select images</p>
         <p className="mt-1 text-[12.5px] text-[var(--muted)]">JPG · PNG · WebP · AVIF · HEIC</p>
       </div>
 
@@ -269,7 +270,7 @@ export function Cleaner() {
       <button
         type="button"
         onClick={() => inputRef.current?.click()}
-        className="mt-3.5 w-full cursor-pointer rounded-[35px] bg-[var(--accent)] px-4 py-3.5 text-[15px] font-semibold text-white transition-colors hover:bg-[var(--accent-hover)]"
+        className="mt-3.5 hidden sm:block w-full cursor-pointer rounded-[35px] bg-[var(--accent)] px-4 py-3.5 text-[15px] font-semibold text-white transition-colors hover:bg-[var(--accent-hover)]"
       >
         Select images
       </button>

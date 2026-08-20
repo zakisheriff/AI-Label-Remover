@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { Cleaner } from "@/components/Cleaner";
-import { TryNowButton } from "@/components/TryNowButton";
 import { faqs, removedItems, steps } from "@/lib/content";
 import { site } from "@/lib/site";
 
@@ -22,7 +21,6 @@ const platforms = [
 export default function HomePage() {
   return (
     <main>
-      <TryNowButton />
       {/* Instagram's login layout: showcase on the left, the form column on the
           right behind a full-height hairline divider. The form is the tool. */}
       <section className="relative flex min-h-[100svh] flex-col lg:flex-row">

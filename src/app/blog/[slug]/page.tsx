@@ -48,7 +48,7 @@ export default async function BlogPostPage({
       
       <div className="mt-12 flex gap-4 text-[14px]">
         <Link href="/blog" className="text-[var(--link)] underline">
-          &larr; All guides
+          All guides
         </Link>
         <span className="text-[var(--border)]">|</span>
         <Link href="/" className="text-[var(--link)] underline">
