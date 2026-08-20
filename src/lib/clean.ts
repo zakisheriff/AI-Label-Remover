@@ -98,6 +98,36 @@ function toBlob(canvas: HTMLCanvasElement, mime: string, quality: number): Promi
   });
 }
 
+export async function upscaleImageBlob(blob: Blob, mime: string, quality: number): Promise<{ blob: Blob; width: number; height: number }> {
+  const source = await decode(blob as File);
+  const originalWidth = "width" in source ? source.width : 0;
+  const originalHeight = "height" in source ? source.height : 0;
+  if (!originalWidth || !originalHeight) throw new Error("Could not decode image for upscaling.");
+
+  const width = originalWidth * 2;
+  const height = originalHeight * 2;
+
+  const canvas = document.createElement("canvas");
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("Browser canvas blocked.");
+
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
+
+  if (mime === "image/jpeg") {
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, width, height);
+  }
+
+  ctx.drawImage(source as CanvasImageSource, 0, 0, width, height);
+  if ("close" in source) source.close();
+
+  const upscaledBlob = await toBlob(canvas, mime, quality);
+  return { blob: upscaledBlob, width, height };
+}
+
 export async function cleanImage(file: File, options: CleanOptions): Promise<CleanResult> {
   const source = await decode(file);
   const width = "width" in source ? source.width : 0;

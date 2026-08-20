@@ -4,7 +4,7 @@ import gsap from "gsap";
 import Link from "next/link";
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { inspect, type Report } from "@/lib/metadata";
-import { cleanImage, DEFAULT_OPTIONS, type CleanOptions, type CleanResult } from "@/lib/clean";
+import { cleanImage, upscaleImageBlob, DEFAULT_OPTIONS, type CleanOptions, type CleanResult } from "@/lib/clean";
 import { createZip } from "@/lib/zip";
 import { MAX_BATCH, MAX_FILE_MB } from "@/lib/site";
 
@@ -41,10 +41,36 @@ export function Cleaner() {
   const [dragging, setDragging] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [optionsMounted, setOptionsMounted] = useState(false);
+  const [upscalingIds, setUpscalingIds] = useState<Record<string, boolean>>({});
   const inputRef = useRef<HTMLInputElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
   const optionsRef = useRef(options);
   const formId = useId();
+
+  const handleUpscale = useCallback(async (item: Item) => {
+    if (!item.result || !item.url) return;
+    setUpscalingIds((prev) => ({ ...prev, [item.id]: true }));
+    try {
+      const mime = item.result.mime;
+      const quality = optionsRef.current.quality;
+      const res = await upscaleImageBlob(item.result.blob, mime, quality);
+      
+      const url = URL.createObjectURL(res.blob);
+      const link = document.createElement("a");
+      link.href = url;
+      
+      const ext = item.result.extension;
+      const originalBase = item.name.replace(/\.[^.]+$/, "");
+      link.download = `${originalBase}-clean-2x.${ext}`;
+      
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 15_000);
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Upscaling failed.");
+    } finally {
+      setUpscalingIds((prev) => ({ ...prev, [item.id]: false }));
+    }
+  }, []);
 
   // GSAP drives the options panel so it grows and collapses from its real
   // height instead of popping in and vanishing on unmount. Mounting happens on
@@ -416,13 +442,23 @@ export function Cleaner() {
                 </div>
 
                 {item.status === "done" && item.url && item.result && (
-                  <a
-                    href={item.url}
-                    download={cleanName(item.name, item.result.extension)}
-                    className="h-fit shrink-0 cursor-pointer rounded-[35px] bg-[var(--accent)] px-3.5 py-1.5 text-[13px] font-semibold text-white transition-colors hover:bg-[var(--accent-hover)]"
-                  >
-                    Download
-                  </a>
+                  <div className="flex flex-col gap-1.5 items-stretch shrink-0 min-w-[90px]">
+                    <a
+                      href={item.url}
+                      download={cleanName(item.name, item.result.extension)}
+                      className="cursor-pointer rounded-[35px] bg-[var(--accent)] px-3 py-1.5 text-[12.5px] font-semibold text-white transition-colors hover:bg-[var(--accent-hover)] text-center"
+                    >
+                      Download
+                    </a>
+                    <button
+                      type="button"
+                      onClick={() => handleUpscale(item)}
+                      disabled={upscalingIds[item.id]}
+                      className="cursor-pointer rounded-[35px] border border-[var(--border)] bg-[var(--surface)] px-3 py-1.5 text-[11px] font-semibold text-[var(--foreground)] transition-colors hover:bg-[color-mix(in_srgb,var(--foreground)_5%,transparent)] disabled:opacity-50 disabled:cursor-not-allowed text-center"
+                    >
+                      {upscalingIds[item.id] ? "Upscaling..." : "Upscale 2x"}
+                    </button>
+                  </div>
                 )}
               </li>
             ))}
