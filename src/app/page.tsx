@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { Cleaner } from "@/components/Cleaner";
+import { TryNowButton } from "@/components/TryNowButton";
 import { faqs, removedItems, steps } from "@/lib/content";
 import { site } from "@/lib/site";
 
@@ -12,8 +13,8 @@ export const metadata: Metadata = {
 };
 
 const platforms = [
-  { name: "Instagram", label: "“AI info”" },
-  { name: "Facebook", label: "“Made with AI”" },
+  { name: "Instagram", label: "“AI info” or “AI content”" },
+  { name: "Facebook", label: "“AI info” or “Made with AI”" },
   { name: "TikTok", label: "“AI-generated”" },
   { name: "Pinterest", label: "GenAI badge" },
 ];
@@ -21,9 +22,20 @@ const platforms = [
 export default function HomePage() {
   return (
     <main>
+      <TryNowButton />
       {/* Instagram's login layout: showcase on the left, the form column on the
           right behind a full-height hairline divider. The form is the tool. */}
       <section className="relative flex min-h-[100svh] flex-col lg:flex-row">
+        {/* GitHub Star Button */}
+        <a
+          href="https://github.com/zakisheriff/AI-Label-Remover"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="absolute right-6 top-8 z-10 flex items-center gap-1.5 rounded-full border border-[var(--border)] bg-[var(--surface)] px-3 py-1.5 text-[12px] font-semibold transition-colors hover:bg-[color-mix(in_srgb,var(--foreground)_5%,transparent)] lg:right-14 lg:top-10 sm:text-[13px] sm:px-4 sm:py-2"
+        >
+          <span>Star on GitHub</span>
+        </a>
+
         {/* Logo sits top-left of the split on desktop, above the tool on phones. */}
         <div className="order-1 flex justify-center px-6 pt-8 lg:absolute lg:left-14 lg:top-10 lg:z-10 lg:block lg:px-0 lg:pt-0">
           <Image
@@ -56,16 +68,22 @@ export default function HomePage() {
               className="mt-6 h-auto w-full max-w-[520px] self-center"
             />
 
-            <p className="mt-5 text-center text-[12px] text-[var(--muted)] lg:hidden">
-              Nothing is uploaded, cleaning happens in your browser.{" "}
-              <Link href="/how-it-works" className="underline hover:opacity-70">
-                How it works
-              </Link>
+            <p className="mt-5 text-center text-[11.5px] text-[var(--muted)] lg:hidden">
+              Nothing is uploaded, cleaned in-browser.{" "}
+              <span className="whitespace-nowrap">
+                <Link href="/how-it-works" className="underline hover:opacity-70">
+                  How it works
+                </Link>{" "}
+                ·{" "}
+                <Link href="/blog" className="underline hover:opacity-70">
+                  Guides
+                </Link>
+              </span>
             </p>
           </div>
         </div>
 
-        <div className="order-2 flex w-full items-center justify-center px-6 pb-4 pt-6 lg:order-2 lg:w-[38%] lg:min-w-[420px] lg:px-10 lg:pb-0 lg:pt-0">
+        <div className="order-2 flex w-full items-center justify-center px-6 pb-4 pt-6 lg:order-2 lg:items-start lg:pt-36 lg:w-[38%] lg:min-w-[420px] lg:px-10 lg:pb-0">
           <div className="w-full max-w-[400px]">
             <Cleaner />
           </div>
@@ -93,7 +111,7 @@ export default function HomePage() {
 
           <ul className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
             {platforms.map((platform) => (
-              <li key={platform.name} className="rounded-[8px] border border-[var(--border)] bg-[var(--surface)] p-3">
+              <li key={platform.name} className="rounded-[24px] border border-[var(--border)] bg-[var(--surface)] p-4">
                 <p className="text-[13px] font-semibold">{platform.name}</p>
                 <p className="mt-0.5 text-[12px] text-[var(--muted)]">{platform.label}</p>
               </li>
@@ -105,7 +123,7 @@ export default function HomePage() {
           <h2 className="text-[22px] font-semibold leading-[30px] tracking-[-0.01em]">What gets removed</h2>
           <div className="mt-5 grid gap-3 sm:grid-cols-2">
             {removedItems.map((item) => (
-              <div key={item.title} className="rounded-[8px] border border-[var(--border)] bg-[var(--surface)] p-4">
+              <div key={item.title} className="rounded-[24px] border border-[var(--border)] bg-[var(--surface)] p-5">
                 <h3 className="text-[14px] font-semibold">{item.title}</h3>
                 <p className="mt-1.5 text-[13px] leading-[20px] text-[var(--muted)]">{item.body}</p>
               </div>
@@ -134,6 +152,10 @@ export default function HomePage() {
             Want the technical detail — segment by segment, chunk by chunk?{" "}
             <Link href="/how-it-works" className="text-[var(--link)] underline">
               Read how it works
+            </Link>{" "}
+            or browse our{" "}
+            <Link href="/blog" className="text-[var(--link)] underline">
+              metadata guides
             </Link>
             .
           </p>
@@ -160,7 +182,7 @@ export default function HomePage() {
         </section>
 
         <section className="pt-14">
-          <div className="rounded-[8px] border border-[var(--border)] bg-[var(--surface)] p-5">
+          <div className="rounded-[24px] border border-[var(--border)] bg-[var(--surface)] p-6">
             <h2 className="text-[15px] font-semibold">What this tool cannot do</h2>
             <p className="mt-2 text-[13px] leading-[21px] text-[var(--muted)]">
               It cannot remove an invisible pixel watermark such as Google&rsquo;s SynthID, it cannot change how a visual

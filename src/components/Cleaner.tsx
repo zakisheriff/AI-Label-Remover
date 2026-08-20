@@ -214,7 +214,7 @@ export function Cleaner() {
       {/* Full-page drop veil, so a file can land anywhere on the site. */}
       {dragging && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-[color-mix(in_srgb,var(--background)_82%,transparent)] backdrop-blur-[2px]">
-          <div className="rounded-[16px] border-2 border-dashed border-[var(--accent)] px-10 py-8 text-center">
+          <div className="rounded-[24px] border-2 border-dashed border-[var(--accent)] px-10 py-8 text-center">
             <p className="text-[17px] font-semibold text-[var(--accent)]">Drop to clean</p>
             <p className="mt-1 text-[13px] text-[var(--muted)]">Release anywhere on the page</p>
           </div>
@@ -238,7 +238,7 @@ export function Cleaner() {
         }}
         onDragOver={(event) => event.preventDefault()}
         onDrop={onDrop}
-        className="mt-5 flex cursor-pointer flex-col items-center justify-center rounded-[25px] border border-[var(--border)] bg-[var(--surface)] px-4 py-14 text-center transition-colors hover:border-[color-mix(in_srgb,var(--foreground)_35%,transparent)]"
+        className="mt-5 flex cursor-pointer flex-col items-center justify-center rounded-[24px] border border-[var(--border)] bg-[var(--surface)] px-4 py-14 text-center transition-colors hover:border-[color-mix(in_srgb,var(--foreground)_35%,transparent)]"
       >
         <svg viewBox="0 0 24 24" aria-hidden="true" className="h-8 w-8 text-[var(--muted)]">
           <path
@@ -286,7 +286,7 @@ export function Cleaner() {
 
       {optionsMounted && (
         <div ref={panelRef} className="overflow-hidden">
-          <div id={formId} className="mt-4 space-y-3 rounded-[14px] border border-[var(--border)] bg-[var(--surface)] p-4 text-[13px]">
+          <div id={formId} className="mt-4 space-y-3 rounded-[24px] border border-[var(--border)] bg-[var(--surface)] p-5 text-[13px]">
           <label className="flex items-center justify-between gap-3">
             <span className="text-[var(--muted)]">Output format</span>
             <select
@@ -349,7 +349,7 @@ export function Cleaner() {
       {notice && <p className="mt-4 text-center text-[12px] text-[var(--danger)]">{notice}</p>}
 
       {items.length > 0 && (
-        <div className="animate-fade-up mt-5 rounded-[14px] border border-[var(--border)] bg-[var(--surface)]">
+        <div className="animate-fade-up mt-5 rounded-[24px] border border-[var(--border)] bg-[var(--surface)]">
           <div className="flex items-center justify-between border-b border-[var(--border)] px-4 py-3">
             <p className="text-[13px] font-semibold">
               {done.length} of {items.length} cleaned
@@ -439,10 +439,14 @@ export function Cleaner() {
         </button>
       )}
 
-      <p className="mt-7 hidden text-center text-[12px] text-[var(--muted)] lg:block">
-        Nothing is uploaded, cleaning happens in your browser.{" "}
+      <p className="mt-7 hidden text-center text-[11px] whitespace-nowrap text-[var(--muted)] lg:block">
+        Nothing is uploaded, cleaned in-browser.{" "}
         <Link href="/how-it-works" className="underline hover:opacity-70">
           How it works
+        </Link>{" "}
+        ·{" "}
+        <Link href="/blog" className="underline hover:opacity-70">
+          Guides
         </Link>
       </p>
     </div>
