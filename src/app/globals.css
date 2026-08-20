@@ -87,3 +87,55 @@ label:has(input[type="checkbox"]),
     animation: none !important;
   }
 }
+
+/* Custom thin scrollbar utility (permanently visible) */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #c1c1c1 #f1f1f1;
+}
+
+@media (prefers-color-scheme: dark) {
+  .custom-scrollbar {
+    scrollbar-color: #555555 #1a1a1a;
+  }
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+  display: block !important;
+  -webkit-appearance: none !important;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+  -webkit-appearance: none !important;
+}
+
+@media (prefers-color-scheme: dark) {
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: #1a1a1a;
+  }
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 10px;
+  border: 2px solid #f1f1f1;
+  -webkit-appearance: none !important;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+@media (prefers-color-scheme: dark) {
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #555555;
+    border: 2px solid #1a1a1a;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: #777777;
+  }
+}

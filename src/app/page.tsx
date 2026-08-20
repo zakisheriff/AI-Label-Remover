@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { Cleaner } from "@/components/Cleaner";
+import { FaqAccordion } from "@/components/FaqAccordion";
+import { FooterLinks } from "@/components/FooterLinks";
 import { faqs, removedItems, steps } from "@/lib/content";
 import { site } from "@/lib/site";
 
@@ -21,72 +22,7 @@ const platforms = [
 export default function HomePage() {
   return (
     <main>
-      {/* Instagram's login layout: showcase on the left, the form column on the
-          right behind a full-height hairline divider. The form is the tool. */}
-      <section className="relative flex min-h-[100svh] flex-col lg:flex-row">
-        {/* GitHub Star Button */}
-        <a
-          href="https://github.com/zakisheriff/AI-Label-Remover"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="absolute right-6 top-8 z-10 flex items-center gap-1.5 rounded-full border border-[var(--border)] bg-[var(--surface)] px-3 py-1.5 text-[12px] font-semibold transition-colors hover:bg-[color-mix(in_srgb,var(--foreground)_5%,transparent)] lg:right-14 lg:top-10 sm:text-[13px] sm:px-4 sm:py-2"
-        >
-          <span>Star on GitHub</span>
-        </a>
-
-        {/* Logo sits top-left of the split on desktop, above the tool on phones. */}
-        <div className="order-1 flex justify-center px-6 pt-8 lg:absolute lg:left-14 lg:top-10 lg:z-10 lg:block lg:px-0 lg:pt-0">
-          <Image
-            src="/website-logo.webp"
-            alt={site.name}
-            width={800}
-            height={490}
-            priority
-            style={{ height: "56px", width: "auto" }}
-            className="dark:invert"
-          />
-        </div>
-
-        <div className="order-3 flex flex-1 flex-col px-6 pb-10 pt-4 lg:order-1 lg:px-14 lg:pt-28">
-          <div className="mx-auto flex w-full max-w-[620px] flex-1 flex-col justify-center">
-            <h1 className="mt-8 text-balance text-center text-[34px] font-normal leading-[42px] tracking-[-0.02em] sm:text-[44px] sm:leading-[52px]">
-              Post your photos without the{" "}
-              <span className="whitespace-nowrap bg-[linear-gradient(90deg,#f9704f,#f0356f,#b83bff)] bg-clip-text font-medium text-transparent">
-                AI label
-              </span>
-              .
-            </h1>
-
-            <Image
-              src="/hero-collage-2.webp"
-              alt="Instagram posts published without an AI label"
-              width={1536}
-              height={1024}
-              priority
-              className="mt-6 h-auto w-full max-w-[520px] self-center"
-            />
-
-            <p className="mt-5 text-center text-[11.5px] text-[var(--muted)] lg:hidden">
-              Nothing is uploaded, cleaned in-browser.{" "}
-              <span className="whitespace-nowrap">
-                <Link href="/how-it-works" className="underline hover:opacity-70">
-                  How it works
-                </Link>{" "}
-                ·{" "}
-                <Link href="/blog" className="underline hover:opacity-70">
-                  Guides
-                </Link>
-              </span>
-            </p>
-          </div>
-        </div>
-
-        <div className="order-2 flex w-full items-center justify-center px-6 pb-4 pt-6 lg:order-2 lg:items-start lg:pt-36 lg:w-[38%] lg:min-w-[420px] lg:px-10 lg:pb-0">
-          <div className="w-full max-w-[400px]">
-            <Cleaner />
-          </div>
-        </div>
-      </section>
+      <Cleaner />
 
       {/* ---------------- SEO / AEO content ---------------- */}
       <div className="mx-auto w-full max-w-[720px] px-6 pb-16">
@@ -161,17 +97,7 @@ export default function HomePage() {
 
         <section className="pt-14">
           <h2 className="text-[22px] font-semibold leading-[30px] tracking-[-0.01em]">Frequently asked questions</h2>
-          <div className="mt-5 divide-y divide-[var(--border)] border-y border-[var(--border)]">
-            {faqs.slice(0, 8).map((faq) => (
-              <details key={faq.q} className="group py-4">
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 text-[15px] font-medium">
-                  {faq.q}
-                  <span className="text-[var(--muted)] transition-transform group-open:rotate-45">+</span>
-                </summary>
-                <p className="mt-2.5 text-[14px] leading-[23px] text-[var(--muted)]">{faq.a}</p>
-              </details>
-            ))}
-          </div>
+          <FaqAccordion items={faqs.slice(0, 8)} />
           <p className="mt-5 text-[14px]">
             <Link href="/faq" className="text-[var(--link)] underline">
               All {faqs.length} questions
@@ -185,16 +111,7 @@ export default function HomePage() {
             <p className="mt-2 text-[13px] leading-[21px] text-[var(--muted)]">
               It cannot remove an invisible pixel watermark such as Google&rsquo;s SynthID, it cannot change how a visual
               AI classifier reads your picture, and it cannot lift a label from a post that is already published. It also
-              does not replace disclosure where a platform&rsquo;s terms or a law such as the EU AI Act require it. Full
-              detail on the{" "}
-              <Link href="/disclaimer" className="text-[var(--link)] underline">
-                disclaimer page
-              </Link>
-              , and on{" "}
-              <Link href="/privacy" className="text-[var(--link)] underline">
-                privacy
-              </Link>
-              .
+              does not replace disclosure where a platform&rsquo;s terms or a law such as the EU AI Act require it. <FooterLinks />
             </p>
           </div>
         </section>

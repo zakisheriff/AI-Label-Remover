@@ -10,11 +10,7 @@ export function TryNowButton() {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
-    if (!isHome) {
-      // On subpages, the "Try now" link button is visible immediately
-      setIsVisible(true);
-      return;
-    }
+    if (!isHome) return;
 
     const handleScroll = () => {
       // Show button after scrolling down 300px on the home page
@@ -40,12 +36,14 @@ export function TryNowButton() {
 
   const baseClasses = `fixed top-4 right-4 sm:top-6 sm:right-6 z-40 cursor-pointer rounded-[35px] bg-[var(--accent)] px-5.5 py-3 text-[14px] font-semibold text-white shadow-lg transition-all duration-300 hover:bg-[var(--accent-hover)] active:scale-95 sm:px-5 sm:py-2.5`;
 
+  const show = isHome ? isVisible : true;
+
   if (isHome) {
     return (
       <button
         onClick={scrollToTop}
         className={`${baseClasses} ${
-          isVisible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4 pointer-events-none"
+          show ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4 pointer-events-none"
         }`}
       >
         Try now
@@ -57,7 +55,7 @@ export function TryNowButton() {
     <Link
       href="/"
       className={`${baseClasses} ${
-        isVisible ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4"
+        show ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4"
       }`}
     >
       Try now
