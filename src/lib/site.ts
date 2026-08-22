@@ -9,6 +9,7 @@ export const site = {
   publisher: "The Atom",
   publisherUrl: "https://theatom.lk",
   email: "hello@theatom.lk",
+  feedbackEmail: "connect.theatom@gmail.com",
   locale: "en_US",
   keywords: [
     "ai label remover",

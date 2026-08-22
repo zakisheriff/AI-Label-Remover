@@ -6,7 +6,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { inspect, type Report } from "@/lib/metadata";
 import { cleanImage, upscaleImageBlob, DEFAULT_OPTIONS, type CleanResult } from "@/lib/clean";
 import { createZip } from "@/lib/zip";
-import { MAX_BATCH, MAX_FILE_MB } from "@/lib/site";
+import { MAX_BATCH, MAX_FILE_MB, site } from "@/lib/site";
 import { cleanVideo, createVideoThumbnail, MAX_VIDEO_FILE_MB, type VideoCleanResult } from "@/lib/video";
 
 type Status = "queued" | "working" | "done" | "error";
@@ -596,6 +596,24 @@ export function Cleaner() {
             </div>
           </div>
         </section>
+
+        <p className="px-6 pb-7 text-center text-[11px] text-[var(--muted)]">
+          <a
+            href={`mailto:${site.feedbackEmail}?subject=AI%20Label%20Remover%20bug%20report`}
+            className="underline hover:opacity-70"
+            title={`Email ${site.feedbackEmail}`}
+          >
+            Report a bug
+          </a>{" "}
+          ·{" "}
+          <a
+            href={`mailto:${site.feedbackEmail}?subject=AI%20Label%20Remover%20feature%20request`}
+            className="underline hover:opacity-70"
+            title={`Email ${site.feedbackEmail}`}
+          >
+            Request a feature
+          </a>
+        </p>
       </div>
     );
 }
