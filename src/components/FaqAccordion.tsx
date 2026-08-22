@@ -1,7 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
-import gsap from "gsap";
+import { useId, useState } from "react";
 
 type FaqItem = {
   q: string;
@@ -10,61 +9,10 @@ type FaqItem = {
 
 export function FaqAccordion({ items }: { items: FaqItem[] }) {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
-  const contentRefs = useRef<(HTMLDivElement | null)[]>([]);
-  const iconRefs = useRef<(HTMLSpanElement | null)[]>([]);
+  const id = useId();
 
   const toggle = (index: number) => {
-    const isOpening = activeIndex !== index;
-
-    // 1. Close current active if exists
-    if (activeIndex !== null) {
-      const activeContent = contentRefs.current[activeIndex];
-      const activeIcon = iconRefs.current[activeIndex];
-      if (activeContent) {
-        gsap.to(activeContent, {
-          height: 0,
-          opacity: 0,
-          duration: 0.35,
-          ease: "power2.inOut",
-        });
-      }
-      if (activeIcon) {
-        gsap.to(activeIcon, {
-          rotate: 0,
-          duration: 0.3,
-          ease: "power2.out",
-        });
-      }
-    }
-
-    // 2. Open new index
-    if (isOpening) {
-      const newContent = contentRefs.current[index];
-      const newIcon = iconRefs.current[index];
-      if (newContent) {
-        gsap.killTweensOf(newContent);
-        gsap.fromTo(
-          newContent,
-          { height: 0, opacity: 0 },
-          {
-            height: "auto",
-            opacity: 1,
-            duration: 0.45,
-            ease: "power3.out",
-          }
-        );
-      }
-      if (newIcon) {
-        gsap.to(newIcon, {
-          rotate: 45,
-          duration: 0.3,
-          ease: "power2.out",
-        });
-      }
-      setActiveIndex(index);
-    } else {
-      setActiveIndex(null);
-    }
+    setActiveIndex((current) => (current === index ? null : index));
   };
 
   return (
@@ -77,27 +25,23 @@ export function FaqAccordion({ items }: { items: FaqItem[] }) {
               onClick={() => toggle(index)}
               className="flex w-full cursor-pointer items-center justify-between gap-4 text-left text-[15px] font-medium focus:outline-none"
               aria-expanded={isOpen}
+              aria-controls={`${id}-answer-${index}`}
             >
               <span>{item.q}</span>
-              <span
-                ref={(el) => {
-                  iconRefs.current[index] = el;
-                }}
-                className="text-[var(--muted)] text-[18px] origin-center shrink-0"
-              >
+              <span className={`shrink-0 origin-center text-[18px] text-[var(--muted)] transition-transform duration-200 ease-out motion-reduce:transition-none ${isOpen ? "rotate-45" : "rotate-0"}`}>
                 +
               </span>
             </button>
             <div
-              ref={(el) => {
-                contentRefs.current[index] = el;
-              }}
-              className="overflow-hidden"
-              style={{ height: 0, opacity: 0 }}
+              id={`${id}-answer-${index}`}
+              aria-hidden={!isOpen}
+              className={`grid transition-[grid-template-rows,opacity] duration-[260ms] ease-out motion-reduce:transition-none ${isOpen ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}
             >
-              <p className="mt-2.5 pb-2 text-[14px] leading-[23px] text-[var(--muted)]">
-                {item.a}
-              </p>
+              <div className="min-h-0 overflow-hidden">
+                <p className="mt-2.5 pb-2 text-[14px] leading-[23px] text-[var(--muted)]">
+                  {item.a}
+                </p>
+              </div>
             </div>
           </div>
         );
