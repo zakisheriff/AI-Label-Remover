@@ -19,6 +19,10 @@ export const faqs: Faq[] = [
     a: "No. Every step — inspection, lossless metadata removal, remuxing and download — runs in your own browser using native file APIs and WebAssembly. Your photos and videos never leave your device, there is no server-side queue, and nothing is stored or logged. After the FFmpeg engine has loaded, processing needs no upload connection.",
   },
   {
+    q: "Is AI Label Remover free, ad-free and available without a login?",
+    a: "Yes. AI Label Remover is free to use, displays no advertising, requires no account or email address, and does not impose a trial counter before download. Photo and video processing runs inside the browser instead of uploading media to an application server.",
+  },
+  {
     q: "Which image metadata does AI Label Remover strip?",
     a: "The cleaner removes C2PA content credentials, XMP packets (prompts, seeds and generator names), IPTC attribution fields, EXIF including GPS, serial numbers and timestamps, JPEG comments, and PNG text chunks written by Stable Diffusion or ComfyUI. In Auto mode it preserves the original JPG, PNG or WebP encoded image data.",
   },

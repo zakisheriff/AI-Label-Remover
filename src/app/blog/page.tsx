@@ -6,7 +6,7 @@ import { blogPosts } from "@/lib/blog";
 export const metadata: Metadata = {
   title: "AI Label & Metadata Guides — AI Label Remover Blog",
   description:
-    "Guides to image and video AI metadata, C2PA, social-platform labels, and private browser-based cleaning for photos, MP4, MOV and WebM files.",
+    "Guides to free, ad-free image and video AI metadata cleaning, C2PA, social-platform labels, privacy, MP4, MOV and WebM files.",
   alternates: { canonical: "/blog" },
 };
 
@@ -14,7 +14,7 @@ export default function BlogListingPage() {
   return (
     <PageShell
       title="Guides & Insights"
-      intro="Learn how file-level AI provenance works in photos and videos, what lossless metadata cleaning removes, and where its limits are."
+      intro="Learn how private, ad-free AI metadata cleaning works for photos and videos, what it removes, and where its limits are."
     >
       <div className="mt-8 space-y-10">
         {blogPosts.map((post) => (

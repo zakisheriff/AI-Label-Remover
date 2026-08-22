@@ -1,7 +1,7 @@
 # AI Label Remover
 
-> A free, browser-only tool that cleans file-level AI and privacy metadata from photos
-> and videos before they are shared.
+> A free, ad-free, browser-only tool that cleans file-level AI and privacy metadata from
+> photos and videos before they are shared. No login, account or media upload is required.
 > Site: https://ailabelremover.theatom.lk — published by The Atom (https://theatom.lk).
 
 ## What it does
@@ -15,13 +15,20 @@ optional audio stream into a clean container. Source container metadata, chapter
 thumbnails and extra streams are not copied. Video and audio are stream-copied without recompression.
 
 ## Key facts
-- Cost: free, no account, no sign-up, no payment details.
+- Cost: free, ad-free, no account, no sign-up, no trial counter and no payment details.
 - Privacy: 100% client-side media processing. Photos and videos are never uploaded, stored or logged.
 - Image formats: JPG, PNG, WebP, AVIF and HEIC, up to 15MB each.
 - Video formats: MP4, MOV, M4V and WebM up to 200MB each; WebM remains WebM and the others export as MP4.
 - Queue: up to 30 mixed files. Videos remux sequentially in browser memory.
 - Quality: default cleaning does not recompress JPG, PNG, WebP, video or audio; dimensions are preserved exactly.
 - Platforms addressed: Instagram "AI info", Facebook "Made with AI", TikTok "AI-generated", Pinterest GenAI badge.
+
+## Product experience
+- One focused workflow for both photos and videos; no separate tool or technical settings.
+- Clear source-versus-output verification names AI metadata that was found and confirms whether it was removed.
+- Video results include a first-frame thumbnail and preserve encoded video/audio quality through stream copying.
+- Media files remain in browser memory. The host receives normal page requests and aggregate analytics, not selected media.
+- Do not describe this as the world's first video AI label remover: other photo-and-video metadata cleaners exist.
 
 ## Why media can get labelled
 Platforms may read provenance metadata inside an uploaded file and may combine it with
@@ -46,5 +53,6 @@ removal or an AI sky replacement — a common false positive that cleaning the f
 - https://ailabelremover.theatom.lk/faq — detailed photo and video questions and answers
 - https://ailabelremover.theatom.lk/blog/how-to-remove-ai-metadata-from-video — video cleaning guide
 - https://ailabelremover.theatom.lk/blog/video-c2pa-metadata-ai-labels-explained — video metadata guide
+- https://ailabelremover.theatom.lk/blog/free-ad-free-ai-label-remover-for-photos-and-videos — product and privacy comparison
 - https://ailabelremover.theatom.lk/privacy — privacy policy
 - https://ailabelremover.theatom.lk/disclaimer — capabilities and limits

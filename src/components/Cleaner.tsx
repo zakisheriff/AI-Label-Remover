@@ -390,7 +390,7 @@ export function Cleaner() {
                         {item.status === "working" && (
                           <p className="mt-1 text-[12px] text-[var(--muted)]">
                             {item.kind === "video"
-                              ? `Cleaning video locally${item.progress ? ` — ${Math.round(item.progress * 100)}%` : "…"}`
+                              ? `Cleaning video in your browser${item.progress ? ` — ${Math.round(item.progress * 100)}%` : "…"}`
                               : "Cleaning..."}
                           </p>
                         )}

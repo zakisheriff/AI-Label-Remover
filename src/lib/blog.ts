@@ -10,6 +10,37 @@ export type BlogPost = {
 
 export const blogPosts: BlogPost[] = [
   {
+    slug: "free-ad-free-ai-label-remover-for-photos-and-videos",
+    title: "A Better AI Label Remover: Free, Ad-Free and Built for Photos & Videos",
+    description: "Why this private AI label remover uses a clean interface, requires no login, shows no ads, supports photos and videos, and keeps media inside your browser.",
+    publishedAt: "August 22, 2026",
+    publishedAtISO: "2026-08-22",
+    author: "Zaki Sheriff",
+    content: `
+      <p>An AI metadata cleaner should be a small, trustworthy utility: choose a file, understand what was found, and download the cleaned result. Yet online file tools can feel crowded or unclear. Some focus only on photos, some introduce usage limits or account prompts, and server-based tools require the media itself to leave your device.</p>
+
+      <h2>A focused interface instead of a maze</h2>
+      <p>AI Label Remover keeps the workflow visible. Drop a photo or video, watch it clean inside the browser, then review a direct result. There are no technical options to configure and no advertising blocks competing with the download button. On mobile and desktop, the input and Output sections stay easy to find.</p>
+
+      <h2>Free means no login, trial counter or advertising wall</h2>
+      <p>The tool is free to use without an account, email address, subscription or payment details. It does not wait until several attempts have passed before asking you to register, and it does not place an advertisement between the cleaned file and its download. Mixed batches can contain up to 30 supported photos and videos.</p>
+
+      <h2>Photo and video cleaning in one place</h2>
+      <p>Many familiar EXIF removers are designed around still images. AI Label Remover also handles MP4, MOV, M4V and WebM video, including C2PA provenance and ordinary container tags. Video and audio streams are copied into a clean container without recompression, so resolution and encoded quality stay unchanged. A first-frame thumbnail makes each result recognizable.</p>
+
+      <h2>Visible proof instead of a generic success message</h2>
+      <p>A generated video and a camera video should not receive the same explanation. The tool inspects the source and the cleaned result separately. If it finds C2PA, XMP or a known generator signature and confirms that it disappeared, it names the marker as removed. If no embedded AI marker exists, it says so and explains that metadata inspection cannot determine whether the visible content itself was AI-generated.</p>
+
+      <h2>Your media stays in your browser</h2>
+      <p>Photos and videos are processed in browser memory using native web APIs and a self-hosted FFmpeg WebAssembly runtime. There is no media-upload endpoint, account library or server-side processing queue. The website host can receive ordinary page requests and aggregate analytics described in the <a href="/privacy">privacy policy</a>, but it never receives the photo or video selected for cleaning.</p>
+
+      <h2>Honest limits matter</h2>
+      <p>File metadata is only one possible platform signal. A cleaner cannot promise to remove an invisible watermark embedded in pixels, frames or audio, change a classifier result, or erase a label already stored on a published post. The tool reports what it can verify instead of pretending that every AI signal is the same.</p>
+
+      <p>For a simple, private workflow, open the <a href="/">free photo and video AI label remover</a>, drop your files and download the verified cleaned copies—no login and no ads.</p>
+    `,
+  },
+  {
     slug: "how-to-remove-ai-metadata-from-video",
     title: "How to Remove AI Metadata From MP4, MOV and WebM Videos",
     description: "Clean C2PA and container metadata from a video locally in your browser with lossless remuxing, no recompression and no media upload.",

@@ -14,7 +14,7 @@ const isVercelDeployment = process.env.VERCEL === "1";
 export const metadata: Metadata = {
   metadataBase: new URL(site.url),
   title: {
-    default: "AI Label Remover for Photos & Videos — Free Metadata Cleaner",
+    default: "Free AI Label Remover for Photos & Videos — No Login",
     template: `%s · ${site.name}`,
   },
   description: site.description,
@@ -30,12 +30,12 @@ export const metadata: Metadata = {
     url: site.url,
     siteName: site.name,
     locale: site.locale,
-    title: "AI Label Remover for Photos & Videos — Free Metadata Cleaner",
+    title: "Free AI Label Remover for Photos & Videos — No Login",
     description: site.description,
   },
   twitter: {
     card: "summary_large_image",
-    title: "AI Label Remover for Photos & Videos — Free Metadata Cleaner",
+    title: "Free AI Label Remover for Photos & Videos — No Login",
     description: site.tagline,
   },
   robots: {
@@ -103,6 +103,7 @@ const structuredData = {
         "Losslessly remuxes MP4, MOV, M4V and WebM without recompressing video or audio",
         "Removes video container metadata, chapters and attached thumbnails",
         "No quality controls or technical setup required",
+        "Free, ad-free and available without an account",
         "Images up to 15MB and videos up to 200MB, 100% in-browser",
       ],
       publisher: { "@id": `${site.url}/#organization` },

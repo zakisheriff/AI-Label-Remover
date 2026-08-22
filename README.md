@@ -38,6 +38,7 @@
 AI Label Remover's mission is to be:
 
 - **A completely free media privacy tool** — no accounts, subscriptions, or paywalls
+- **An ad-free utility** — no advertising blocks, trial counter, or login prompt before download
 - **A browser-only metadata cleaner** — lossless image stripping and FFmpeg video remuxing happen locally
 - **A transparent utility** — it reports what was found, what was removed, and what metadata cleaning cannot do
 
@@ -49,6 +50,7 @@ Social platforms may read provenance records embedded inside photos and videos w
 AI-assisted edits can leave markers on real media, while ordinary metadata may expose GPS coordinates, device details, timestamps, prompts, seeds, encoder names, and edit history.
 
 AI Label Remover cleans common image formats and remuxes videos without copying source metadata or recompressing the encoded media.
+It supports photos and videos in one focused workflow, re-inspects cleaned files, and names verified AI provenance removals instead of showing the same generic result for every file.
 
 ---
 
@@ -82,7 +84,7 @@ AI Label Remover cleans common image formats and remuxes videos without copying 
 - **Detailed Results**
   Shows the source format, file size, output format, dimensions, detected metadata, and generator signatures for each image.
 
-- **Full Video Transcoding**
+- **Lossless Video Cleaning**
   Stream-copies MP4, MOV, M4V and WebM video/audio locally into a clean container without source metadata, chapters, thumbnails or extra streams.
 
 ---
@@ -100,6 +102,9 @@ AI Label Remover cleans common image formats and remuxes videos without copying 
 
 - **No Accounts or File Tracking**
   The application requires no registration and does not store processed media.
+
+- **No Ads or Trial Counter**
+  Cleaning and downloads remain available without advertising, attempt limits, or an account prompt.
 
 ---
 
@@ -284,6 +289,8 @@ The tool removes file-level metadata. It cannot guarantee removal of content-emb
 - `/` — Photo and video cleaner, metadata education, workflow, and common questions
 - `/how-it-works` — Technical explanation of lossless image stripping and video remuxing
 - `/faq` — Detailed answers about privacy, quality, formats, platforms, and limits
+- `/blog` — AI metadata, privacy, and product-comparison guides
+- `/blog/free-ad-free-ai-label-remover-for-photos-and-videos` — Free, ad-free photo-and-video workflow
 - `/privacy` — Media-processing and data-handling policy
 - `/disclaimer` — Supported use, limitations, and disclosure responsibilities
 

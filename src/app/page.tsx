@@ -7,7 +7,7 @@ import { faqs, removedItems, steps } from "@/lib/content";
 import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
-  title: "AI Label Remover for Photos & Videos — Free Metadata Cleaner",
+  title: "Free AI Label Remover for Photos & Videos — No Login",
   description: site.description,
   alternates: { canonical: "/" },
 };
@@ -51,6 +51,22 @@ export default function HomePage() {
               </li>
             ))}
           </ul>
+        </section>
+
+        <section className="pt-14">
+          <h2 className="text-[22px] font-semibold leading-[30px] tracking-[-0.01em]">
+            A free, ad-free AI label remover for photos and videos
+          </h2>
+          <p className="mt-3 text-[15px] leading-[26px]">
+            No login, trial counter, subscription or advertising wall stands between you and the download. The focused
+            interface handles images and videos in the same queue, shows which AI marker was detected, and inspects the
+            cleaned result again before reporting that a marker was removed.
+          </p>
+          <p className="mt-3 text-[15px] leading-[26px]">
+            Processing happens in your browser tab. Your media is never posted to an application upload endpoint, stored
+            in an account or handed to an advertising network. You get lossless cleaning where the format permits it,
+            including video stream copying that avoids quality-reducing recompression.
+          </p>
         </section>
 
         <section className="pt-14">
