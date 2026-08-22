@@ -9,11 +9,12 @@ import "./globals.css";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
+const isVercelDeployment = process.env.VERCEL === "1";
 
 export const metadata: Metadata = {
   metadataBase: new URL(site.url),
   title: {
-    default: "AI Label Remover — Remove the “AI Info” Label From Photos, Free",
+    default: "AI Label Remover for Photos & Videos — Free Metadata Cleaner",
     template: `%s · ${site.name}`,
   },
   description: site.description,
@@ -29,12 +30,12 @@ export const metadata: Metadata = {
     url: site.url,
     siteName: site.name,
     locale: site.locale,
-    title: "AI Label Remover — Remove the “AI Info” Label From Photos, Free",
+    title: "AI Label Remover for Photos & Videos — Free Metadata Cleaner",
     description: site.description,
   },
   twitter: {
     card: "summary_large_image",
-    title: "AI Label Remover — Remove the “AI Info” Label From Photos, Free",
+    title: "AI Label Remover for Photos & Videos — Free Metadata Cleaner",
     description: site.tagline,
   },
   robots: {
@@ -90,7 +91,7 @@ const structuredData = {
       url: site.url,
       applicationCategory: "MultimediaApplication",
       operatingSystem: "Any browser — Chrome, Safari, Firefox, Edge",
-      browserRequirements: "Requires JavaScript and HTML5 Canvas",
+      browserRequirements: "Requires JavaScript, WebAssembly and a modern browser",
       description: site.description,
       isAccessibleForFree: true,
       offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
@@ -99,23 +100,24 @@ const structuredData = {
         "Removes XMP AI generator tags and prompts",
         "Removes EXIF, GPS and IPTC metadata",
         "Removes PNG tEXt, iTXt and zTXt chunks",
-        "Optional perceptual fingerprint reset",
-        "Optional placeholder camera EXIF",
-        "Batch of up to 30 images, 100% in-browser",
+        "Losslessly remuxes MP4, MOV, M4V and WebM without recompressing video or audio",
+        "Removes video container metadata, chapters and attached thumbnails",
+        "No quality controls or technical setup required",
+        "Images up to 15MB and videos up to 200MB, 100% in-browser",
       ],
       publisher: { "@id": `${site.url}/#organization` },
     },
     {
       "@type": "HowTo",
       "@id": `${site.url}/#howto`,
-      name: "How to remove the AI label from a photo before uploading",
+      name: "How to clean AI metadata from a photo or video before uploading",
       totalTime: "PT1M",
       estimatedCost: { "@type": "MonetaryAmount", currency: "USD", value: "0" },
       tool: [{ "@type": "HowToTool", name: "A web browser" }],
       step: [
-        { "@type": "HowToStep", position: 1, name: "Drop your image", text: "Drag a JPG, PNG, WebP, AVIF or HEIC file into the tool. It is read into browser memory and never uploaded." },
-        { "@type": "HowToStep", position: 2, name: "Review what was found", text: "The tool lists the C2PA, XMP, EXIF, IPTC and PNG-chunk records inside the file and names the AI generator that wrote them." },
-        { "@type": "HowToStep", position: 3, name: "Clean the file", text: "The image is decoded to pixels and re-encoded, which leaves every metadata record behind in one pass." },
+        { "@type": "HowToStep", position: 1, name: "Drop your media", text: "Drag a supported image, MP4, MOV, M4V or WebM file into the tool. It is read into browser memory and never uploaded." },
+        { "@type": "HowToStep", position: 2, name: "Review or track processing", text: "Images show detected metadata; videos show local remuxing progress." },
+        { "@type": "HowToStep", position: 3, name: "Clean the file", text: "Image metadata is stripped without recompression where supported. Video and audio streams are copied into a clean container without re-encoding." },
         { "@type": "HowToStep", position: 4, name: "Download and post", text: "Download the cleaned copy and upload that file instead of the original." },
       ],
     },
@@ -140,7 +142,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Script id="structured-data" type="application/ld+json" strategy="afterInteractive">
           {JSON.stringify(structuredData)}
         </Script>
-        <Analytics />
+        {isVercelDeployment && <Analytics />}
       </body>
     </html>
   );

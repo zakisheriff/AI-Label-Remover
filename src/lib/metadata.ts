@@ -16,7 +16,8 @@ export type MetadataKind =
   | "PNG text chunk"
   | "ICC profile"
   | "GPS location"
-  | "Comment";
+  | "Comment"
+  | "Container metadata";
 
 export type Finding = {
   kind: MetadataKind;
@@ -184,14 +185,51 @@ function scanIsobmff(bytes: Uint8Array, findings: Finding[]) {
   }
 }
 
+function scanVideoContainer(bytes: Uint8Array, format: string, findings: Finding[]) {
+  const head = bytes.subarray(0, Math.min(bytes.length, 1024 * 1024));
+  const tail = bytes.subarray(Math.max(0, bytes.length - 2 * 1024 * 1024));
+  const has = (tag: string) => indexOfString(head, tag) !== -1 || indexOfString(tail, tag) !== -1;
+  if (format === "MP4" || format === "MOV") {
+    if (has("jumb") || has("c2pa")) {
+      findings.push({ kind: "C2PA", detail: "JUMBF / C2PA provenance box", aiRelated: true });
+    }
+    if (has("ns.adobe.com/xap")) {
+      findings.push({ kind: "XMP", detail: "XMP provenance box", aiRelated: true });
+    }
+    if (["meta", "udta", "ilst", "mdta", "©too"].some(has)) {
+      findings.push({
+        kind: "Container metadata",
+        detail: "MP4/MOV metadata boxes (such as encoder, creation or descriptive tags)",
+        aiRelated: false,
+      });
+    }
+  } else if (format === "WEBM") {
+    if (["ENCODER", "TITLE", "COMMENT", "DATE_", "TagName"].some(has)) {
+      findings.push({
+        kind: "Container metadata",
+        detail: "WebM tags (such as encoder, title, comment or date)",
+        aiRelated: false,
+      });
+    }
+    if (has("c2pa") || has("jumb")) {
+      findings.push({ kind: "C2PA", detail: "C2PA provenance record", aiRelated: true });
+    }
+    if (has("ns.adobe.com/xap")) {
+      findings.push({ kind: "XMP", detail: "XMP provenance packet", aiRelated: true });
+    }
+  }
+}
+
 export function detectFormat(bytes: Uint8Array): string {
   if (bytes[0] === 0xff && bytes[1] === 0xd8) return "JPEG";
   if (ascii(bytes, 1, 3) === "PNG") return "PNG";
   if (ascii(bytes, 0, 4) === "RIFF" && ascii(bytes, 8, 4) === "WEBP") return "WEBP";
+  if (bytes[0] === 0x1a && bytes[1] === 0x45 && bytes[2] === 0xdf && bytes[3] === 0xa3) return "WEBM";
   if (ascii(bytes, 4, 4) === "ftyp") {
     const brand = ascii(bytes, 8, 4);
     if (brand.startsWith("avi")) return "AVIF";
-    return "HEIC";
+    if (["heic", "heix", "hevc", "hevx", "mif1", "msf1"].includes(brand)) return "HEIC";
+    return brand === "qt  " ? "MOV" : "MP4";
   }
   if (ascii(bytes, 0, 3) === "GIF") return "GIF";
   return "UNKNOWN";
@@ -207,6 +245,7 @@ export function inspect(buffer: ArrayBuffer): Report {
     else if (format === "PNG") scanPng(bytes, findings);
     else if (format === "WEBP") scanWebp(bytes, findings);
     else if (format === "AVIF" || format === "HEIC") scanIsobmff(bytes, findings);
+    else if (format === "MP4" || format === "MOV" || format === "WEBM") scanVideoContainer(bytes, format, findings);
   } catch {
     // A malformed container should never block cleaning — re-encoding drops
     // everything regardless of what the scanner managed to parse.

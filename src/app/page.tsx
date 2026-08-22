@@ -7,7 +7,7 @@ import { faqs, removedItems, steps } from "@/lib/content";
 import { site } from "@/lib/site";
 
 export const metadata: Metadata = {
-  title: "AI Label Remover — Remove the “AI Info” Label From Photos, Free",
+  title: "AI Label Remover for Photos & Videos — Free Metadata Cleaner",
   description: site.description,
   alternates: { canonical: "/" },
 };
@@ -28,19 +28,19 @@ export default function HomePage() {
       <div className="mx-auto w-full max-w-[720px] px-6 pb-16">
         <section className="border-t border-[var(--border)] pt-12">
           <h2 className="text-[22px] font-semibold leading-[30px] tracking-[-0.01em]">
-            Why does Instagram say “AI info” on my photo?
+            Why does a platform add an AI label to my photo or video?
           </h2>
           <p className="mt-3 text-[15px] leading-[26px]">
-            Because of what is written <em>inside the file</em>, not what is in the picture. When an image passes through
+            One possible trigger is what is written <em>inside the file</em>, not only what appears on screen. When media passes through
             an AI tool — Midjourney, DALL·E, Gemini, Firefly, Stable Diffusion, or even a single Generative Fill stroke
-            in Photoshop — that tool writes provenance records into the file: a signed C2PA manifest, an XMP packet
-            naming the generator, IPTC attribution fields, and on PNG a text chunk holding your full prompt and seed.
-            Meta, TikTok and Pinterest read those records on upload and attach a label automatically.
+            in Photoshop — the tool may write provenance records into the file: a signed C2PA manifest, an XMP packet
+            naming the generator, IPTC attribution fields, or container metadata. Platforms may read those records on upload.
           </p>
           <p className="mt-3 text-[15px] leading-[26px]">
             That is why real photography gets labelled too. AI Denoise in Lightroom, an AI background removal, an AI sky
             replacement or a CapCut export all leave the same markers behind, and the automatic labeller cannot tell a
-            one-click cleanup from a fully synthetic image. Removing the metadata removes the trigger.
+            one-click cleanup from fully synthetic media. Cleaning removes file-level metadata triggers, but platforms may
+            also use watermarks, classifiers and their own records.
           </p>
 
           <ul className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -67,7 +67,7 @@ export default function HomePage() {
 
         <section className="pt-14">
           <h2 className="text-[22px] font-semibold leading-[30px] tracking-[-0.01em]">
-            How to remove an AI label, step by step
+            How to clean AI metadata, step by step
           </h2>
           <ol className="mt-5 space-y-4">
             {steps.map((step, index) => (
@@ -109,8 +109,8 @@ export default function HomePage() {
           <div className="rounded-[24px] border border-[var(--border)] bg-[var(--surface)] p-6">
             <h2 className="text-[15px] font-semibold">What this tool cannot do</h2>
             <p className="mt-2 text-[13px] leading-[21px] text-[var(--muted)]">
-              It cannot remove an invisible pixel watermark such as Google&rsquo;s SynthID, it cannot change how a visual
-              AI classifier reads your picture, and it cannot lift a label from a post that is already published. It also
+              It cannot remove an invisible watermark embedded in image pixels, video frames or audio, it cannot change how a
+              classifier reads the content, and it cannot lift a label from a post that is already published. It also
               does not replace disclosure where a platform&rsquo;s terms or a law such as the EU AI Act require it. <FooterLinks />
             </p>
           </div>

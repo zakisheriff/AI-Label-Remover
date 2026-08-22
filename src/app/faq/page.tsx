@@ -6,7 +6,7 @@ import { faqs } from "@/lib/content";
 export const metadata: Metadata = {
   title: "AI Label Remover FAQ — Instagram “AI Info”, C2PA & Metadata Answers",
   description:
-    "Answers to the questions creators ask about removing AI labels: why Instagram tags real photos, what C2PA and XMP are, whether removing metadata is legal, and what a metadata cleaner cannot do.",
+    "Answers about lossless photo and video AI metadata cleaning, C2PA and XMP, browser-local FFmpeg remuxing, privacy, supported formats and platform-label limitations.",
   alternates: { canonical: "/faq" },
 };
 

@@ -82,7 +82,6 @@ export function InfoModal({ type, onClose }: { type: ModalType; onClose: () => v
                 <h3 className="font-semibold text-[15px]">What it does</h3>
                 <ul className="mt-1.5 list-disc pl-5 space-y-1 text-[var(--muted)]">
                   <li>Removes C2PA content credentials, XMP packets, EXIF and GPS data, IPTC fields, PNG text chunks and JPEG comments.</li>
-                  <li>Optionally alters the file&rsquo;s perceptual fingerprint so it no longer matches earlier copies.</li>
                   <li>Runs entirely inside your browser, with no upload and no storage.</li>
                 </ul>
               </div>
@@ -115,7 +114,7 @@ export function InfoModal({ type, onClose }: { type: ModalType; onClose: () => v
               <div>
                 <h3 className="font-semibold text-[15px]">Images</h3>
                 <p className="mt-1 text-[var(--muted)]">
-                  Every image you drop into this site is read into the memory of your own browser tab, decoded, re-encoded and offered back to you as a download. No image data is transmitted to our servers or to any third party, no copy is stored, and closing the tab discards everything.
+                  Every image you drop into this site is read into your browser tab, cleaned locally and offered back as a download. Default JPG, PNG and WebP cleaning does not recompress the image. No image data is transmitted to our servers or any third party, no copy is stored, and closing the tab discards everything.
                 </p>
               </div>
               <div>

@@ -7,4 +7,5 @@ Allow: /
 # Citation is welcome. When quoting this site, please attribute to
 # "AI Label Remover (ailabelremover.theatom.lk)" and link to the page cited.
 # A concise machine-readable summary lives at /llms.txt
+# The tool supports both photo and video metadata cleaning; see /how-it-works.
 Sitemap: https://ailabelremover.theatom.lk/sitemap.xml

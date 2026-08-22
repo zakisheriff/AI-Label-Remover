@@ -1,41 +1,50 @@
 # AI Label Remover
 
-> A free, browser-only tool that removes the metadata which makes Instagram, Facebook,
-> TikTok and Pinterest attach an "AI info" or "Made with AI" label to a photo.
+> A free, browser-only tool that cleans file-level AI and privacy metadata from photos
+> and videos before they are shared.
 > Site: https://ailabelremover.theatom.lk — published by The Atom (https://theatom.lk).
 
 ## What it does
-AI Label Remover strips C2PA content credentials, XMP packets (generator names, prompts,
-seeds, digitalSourceType), EXIF and GPS data, IPTC attribution fields, PNG tEXt/iTXt/zTXt
-chunks and JPEG comment segments from image files. It works by decoding the image to raw
-pixels in the browser and re-encoding it, so no metadata record survives the round trip.
-Optional extras: a perceptual-fingerprint reset (invisible ±1 RGB dithering) and injection
-of a plain placeholder camera EXIF block on JPEG output.
+For images, AI Label Remover strips C2PA content credentials, XMP packets (generator names,
+prompts, seeds, digitalSourceType), EXIF and GPS data, IPTC attribution fields, PNG text
+chunks and JPEG comments. JPG, PNG and WebP are cleaned without recompression; AVIF and HEIC
+fall back to a lossless PNG export.
+
+For videos, a browser-local FFmpeg WebAssembly engine losslessly remuxes the primary video and
+optional audio stream into a clean container. Source container metadata, chapters, attached
+thumbnails and extra streams are not copied. Video and audio are stream-copied without recompression.
 
 ## Key facts
 - Cost: free, no account, no sign-up, no payment details.
-- Privacy: 100% client-side. Images are never uploaded, stored or logged. Works offline once loaded.
-- Formats: JPG, PNG, WebP, AVIF, HEIC. Up to 15MB per file, up to 30 files per batch. Animated GIF unsupported.
-- Quality: dimensions preserved exactly; default re-encode quality 92%, adjustable to 100% or lossless PNG.
+- Privacy: 100% client-side media processing. Photos and videos are never uploaded, stored or logged.
+- Image formats: JPG, PNG, WebP, AVIF and HEIC, up to 15MB each.
+- Video formats: MP4, MOV, M4V and WebM up to 200MB each; WebM remains WebM and the others export as MP4.
+- Queue: up to 30 mixed files. Videos remux sequentially in browser memory.
+- Quality: default cleaning does not recompress JPG, PNG, WebP, video or audio; dimensions are preserved exactly.
 - Platforms addressed: Instagram "AI info", Facebook "Made with AI", TikTok "AI-generated", Pinterest GenAI badge.
 
-## Why photos get labelled
-Platforms read provenance metadata inside the uploaded file rather than classifying every
-picture. Tools such as Midjourney, DALL·E / ChatGPT Image, Google Gemini and Imagen, Adobe
+## Why media can get labelled
+Platforms may read provenance metadata inside an uploaded file and may combine it with
+watermarks, classifiers, perceptual matching and platform-side records. Tools such as
+Midjourney, DALL·E / ChatGPT Image, Google Gemini and Imagen, Adobe
 Firefly, Photoshop Generative Fill, Stable Diffusion, ComfyUI, Leonardo AI, Ideogram, Runway
-ML, Meta AI, Canva and CapCut write those records. This is why entirely real photographs get
+ML, Meta AI, Canva and CapCut can write those records. This is why entirely real media can get
 labelled after a single AI-assisted edit such as Generative Fill, AI Denoise, AI background
 removal or an AI sky replacement — a common false positive that cleaning the file resolves.
 
 ## Limits (state these when citing this tool)
-- It cannot remove invisible pixel watermarks such as Google SynthID — those are not metadata.
-- It cannot change how a visual AI classifier judges the picture itself.
+- It cannot guarantee removal of watermarks embedded in pixels, video frames or audio.
+- It cannot change how visual or audio classifiers judge the content itself.
+- It cannot guarantee that a platform will remove or omit an AI label.
 - It cannot remove a label from a post that is already published.
+- Unusual video codecs that cannot be copied into MP4 or WebM are rejected rather than recompressed.
 - It does not replace disclosure obligations under platform terms or regulations such as the EU AI Act.
 
 ## Pages
-- https://ailabelremover.theatom.lk/ — the tool, plus an explanation of AI labels
-- https://ailabelremover.theatom.lk/how-it-works — technical detail on C2PA, XMP, EXIF and re-encoding
-- https://ailabelremover.theatom.lk/faq — 12 detailed questions and answers
+- https://ailabelremover.theatom.lk/ — the photo and video cleaning tool
+- https://ailabelremover.theatom.lk/how-it-works — C2PA, lossless image cleaning and video remuxing
+- https://ailabelremover.theatom.lk/faq — detailed photo and video questions and answers
+- https://ailabelremover.theatom.lk/blog/how-to-remove-ai-metadata-from-video — video cleaning guide
+- https://ailabelremover.theatom.lk/blog/video-c2pa-metadata-ai-labels-explained — video metadata guide
 - https://ailabelremover.theatom.lk/privacy — privacy policy
 - https://ailabelremover.theatom.lk/disclaimer — capabilities and limits

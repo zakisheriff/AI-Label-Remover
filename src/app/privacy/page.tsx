@@ -6,20 +6,25 @@ import { site } from "@/lib/site";
 export const metadata: Metadata = {
   title: "Privacy Policy — Nothing Leaves Your Browser",
   description:
-    "AI Label Remover processes every image locally in your browser. No uploads, no accounts, no image storage and no tracking of the files you clean.",
+    "AI Label Remover processes every photo and video locally in your browser. No media uploads, no accounts, no file storage and no tracking of the files you clean.",
   alternates: { canonical: "/privacy" },
 };
 
 export default function PrivacyPage() {
   return (
     <>
-      <PageShell title="Privacy policy" intro="Short version: your images never leave your device, because there is nowhere for them to go.">
+      <PageShell title="Privacy policy" intro="Short version: your photos and videos never leave your device, because there is no media upload endpoint.">
         <Prose>
-          <h2>Images</h2>
+          <h2>Photos and videos</h2>
           <p>
-            Every image you drop into this site is read into the memory of your own browser tab, decoded, re-encoded and
-            offered back to you as a download. No image data is transmitted to {site.domain} or to any third party, no
-            copy is stored, and closing the tab discards everything. The application contains no upload endpoint at all.
+            Every media file you drop into this site is read into the memory of your own browser tab, cleaned locally
+            and offered back as a download. Default cleaning preserves encoded media quality without recompression. No
+            photo or video data is transmitted to {site.domain} or to a third party,
+            no copy is stored, and closing the tab discards the browser-memory copy.
+          </p>
+          <p>
+            Video cleaning uses an FFmpeg WebAssembly engine served by this website. Your browser downloads that program
+            when it is needed; the selected video is processed locally and is not included in that request.
           </p>
 
           <h2>Accounts</h2>
@@ -35,7 +40,7 @@ export default function PrivacyPage() {
           <p>
             Like any website, the host serving these pages records standard request logs — IP address, timestamp,
             requested path and user agent — for security and abuse prevention. These logs concern page requests only;
-            your images are never part of a request.
+            your media files are never part of a request.
           </p>
 
           <h2>Your rights</h2>

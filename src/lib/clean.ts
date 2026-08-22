@@ -1,12 +1,10 @@
 /**
  * Client-side cleaning pipeline.
  *
- * Decoding an image to pixels and re-encoding it produces a brand new file that
- * carries nothing but the picture: every APP segment, PNG chunk, XMP packet and
- * C2PA manifest is left behind because none of it survives a decode. Optionally
- * we also nudge pixel values (which changes the perceptual hash a platform can
- * use to match the file against an earlier copy) and write a clean camera EXIF
- * block so the export looks like an ordinary photo export.
+ * Default Auto mode removes metadata sections directly from JPG, PNG and WebP
+ * without recompressing their encoded image data. Formats or explicit options
+ * that require pixel changes use the Canvas fallback. Optional controls can
+ * nudge pixel values or write a clean camera EXIF block.
  */
 
 export type OutputFormat = "auto" | "jpeg" | "png" | "webp";
@@ -22,8 +20,8 @@ export type CleanOptions = {
 
 export const DEFAULT_OPTIONS: CleanOptions = {
   output: "auto",
-  quality: 0.92,
-  resetFingerprint: true,
+  quality: 1,
+  resetFingerprint: false,
   injectCameraExif: false,
 };
 
@@ -52,6 +50,101 @@ const EXTENSIONS: Record<string, string> = {
   "image/png": "png",
   "image/webp": "webp",
 };
+
+function stripJpegMetadata(bytes: Uint8Array): Uint8Array {
+  if (bytes[0] !== 0xff || bytes[1] !== 0xd8) return bytes;
+  const parts: Uint8Array[] = [bytes.subarray(0, 2)];
+  let offset = 2;
+  while (offset + 3 < bytes.length) {
+    if (bytes[offset] !== 0xff) break;
+    const marker = bytes[offset + 1];
+    if (marker === 0xda) {
+      parts.push(bytes.subarray(offset));
+      offset = bytes.length;
+      break;
+    }
+    const length = (bytes[offset + 2] << 8) | bytes[offset + 3];
+    const end = offset + 2 + length;
+    if (length < 2 || end > bytes.length) return bytes;
+    const isComment = marker === 0xfe;
+    const isMetadataApp = marker >= 0xe1 && marker <= 0xef && marker !== 0xe2 && marker !== 0xee;
+    if (!isComment && !isMetadataApp) parts.push(bytes.subarray(offset, end));
+    offset = end;
+  }
+  const size = parts.reduce((sum, part) => sum + part.length, 0);
+  const output = new Uint8Array(size);
+  let cursor = 0;
+  for (const part of parts) {
+    output.set(part, cursor);
+    cursor += part.length;
+  }
+  return output;
+}
+
+function stripPngMetadata(bytes: Uint8Array): Uint8Array {
+  const signature = [137, 80, 78, 71, 13, 10, 26, 10];
+  if (!signature.every((byte, index) => bytes[index] === byte)) return bytes;
+  const visualChunks = new Set([
+    "IHDR", "PLTE", "IDAT", "IEND", "tRNS", "cHRM", "gAMA", "iCCP", "sBIT", "sRGB", "bKGD", "pHYs",
+    "acTL", "fcTL", "fdAT",
+  ]);
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  const parts: Uint8Array[] = [bytes.subarray(0, 8)];
+  let offset = 8;
+  while (offset + 12 <= bytes.length) {
+    const length = view.getUint32(offset);
+    const end = offset + 12 + length;
+    if (end > bytes.length) return bytes;
+    const type = String.fromCharCode(...bytes.subarray(offset + 4, offset + 8));
+    if (visualChunks.has(type)) parts.push(bytes.subarray(offset, end));
+    offset = end;
+    if (type === "IEND") break;
+  }
+  const size = parts.reduce((sum, part) => sum + part.length, 0);
+  const output = new Uint8Array(size);
+  let cursor = 0;
+  for (const part of parts) {
+    output.set(part, cursor);
+    cursor += part.length;
+  }
+  return output;
+}
+
+function stripWebpMetadata(bytes: Uint8Array): Uint8Array {
+  const label = (start: number, end: number) => String.fromCharCode(...bytes.subarray(start, end));
+  if (label(0, 4) !== "RIFF" || label(8, 12) !== "WEBP") return bytes;
+  const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+  const parts: Uint8Array[] = [bytes.subarray(0, 12)];
+  let offset = 12;
+  while (offset + 8 <= bytes.length) {
+    const type = label(offset, offset + 4);
+    const length = view.getUint32(offset + 4, true);
+    const end = offset + 8 + length + (length % 2);
+    if (end > bytes.length) return bytes;
+    if (!new Set(["EXIF", "XMP ", "C2PA", "JUMB"]).has(type)) {
+      const chunk = bytes.slice(offset, end);
+      if (type === "VP8X" && chunk.length >= 9) chunk[8] &= ~0x0c;
+      parts.push(chunk);
+    }
+    offset = end;
+  }
+  const size = parts.reduce((sum, part) => sum + part.length, 0);
+  const output = new Uint8Array(size);
+  let cursor = 0;
+  for (const part of parts) {
+    output.set(part, cursor);
+    cursor += part.length;
+  }
+  new DataView(output.buffer).setUint32(4, output.length - 8, true);
+  return output;
+}
+
+async function stripLosslessly(file: File): Promise<Blob | undefined> {
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  if (file.type === "image/jpeg") return new Blob([Uint8Array.from(stripJpegMetadata(bytes)).buffer], { type: file.type });
+  if (file.type === "image/png") return new Blob([Uint8Array.from(stripPngMetadata(bytes)).buffer], { type: file.type });
+  if (file.type === "image/webp") return new Blob([Uint8Array.from(stripWebpMetadata(bytes)).buffer], { type: file.type });
+}
 
 async function decode(file: File): Promise<ImageBitmap | HTMLImageElement> {
   if (typeof createImageBitmap === "function") {
@@ -133,6 +226,14 @@ export async function cleanImage(file: File, options: CleanOptions): Promise<Cle
   const width = "width" in source ? source.width : 0;
   const height = "height" in source ? source.height : 0;
   if (!width || !height) throw new Error("This file has no readable image data.");
+
+  if (options.output === "auto" && !options.resetFingerprint && !options.injectCameraExif) {
+    const blob = await stripLosslessly(file);
+    if (blob) {
+      if ("close" in source) source.close();
+      return { blob, mime: file.type, extension: EXTENSIONS[file.type] ?? "jpg", width, height };
+    }
+  }
 
   const canvas = document.createElement("canvas");
   canvas.width = width;

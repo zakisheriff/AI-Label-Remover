@@ -11,6 +11,7 @@ const eslintConfig = defineConfig([
     ".next/**",
     "out/**",
     "build/**",
+    "public/ffmpeg/**",
     "next-env.d.ts",
   ]),
 ]);

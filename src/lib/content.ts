@@ -4,23 +4,23 @@ export type Faq = { q: string; a: string };
 export const faqs: Faq[] = [
   {
     q: "What is an AI label remover?",
-    a: "An AI label remover is a tool that strips the provenance metadata inside an image file — C2PA content credentials, XMP generator tags, IPTC attribution, EXIF software fields and PNG text chunks. Those records are what Instagram, Facebook, TikTok and Pinterest read on upload before attaching an “AI info” or “Made with AI” badge. AI Label Remover does this entirely in your browser, with no account and no upload.",
+    a: "An AI label remover is a metadata cleaner that strips file-level provenance records such as C2PA content credentials, XMP generator tags, IPTC attribution, EXIF software fields and video container tags. Platforms may use those records when applying AI disclosures. AI Label Remover cleans supported photos and videos entirely in your browser, with no account and no upload.",
   },
   {
     q: "How do I remove the AI label from a photo before posting on Instagram?",
-    a: "Drop the image into the tool on this page, let it re-encode the file, download the cleaned copy, and upload that copy instead of the original. Instagram reads file-level provenance metadata at upload time, so a file that no longer carries C2PA or XMP AI tags no longer gives the automatic labeller anything to match on.",
+    a: "Drop the image into the tool, let it strip the file metadata, download the cleaned copy, and upload that copy instead of the original. Default JPG, PNG and WebP cleaning does not recompress the image. This removes file-level provenance such as C2PA and XMP, but cannot guarantee Instagram’s result because platforms may use additional signals.",
   },
   {
     q: "Why does Instagram say “AI info” on my real photo?",
-    a: "Because an editing step wrote AI provenance metadata into the file, not because the whole picture was judged synthetic. Photoshop Generative Fill, Lightroom AI Denoise, AI background removal, AI sky replacement and CapCut exports all embed C2PA or XMP markers, and Meta’s automatic system labels any upload that carries them. This is the most common false positive creators run into.",
+    a: "One possible reason is that an editing step wrote AI provenance metadata into the file, not that the whole picture was judged synthetic. Tools such as Photoshop Generative Fill or other AI-assisted editors may embed C2PA or XMP markers that platforms can inspect. Classifiers, watermarks and platform-side history can also affect labels.",
   },
   {
     q: "Are my images uploaded to a server?",
-    a: "No. Every step — inspection, decoding, re-encoding and download — runs in your own browser using the File and Canvas APIs. Your photos never leave your device, there is no queue, and nothing is stored or logged. You can disconnect from the internet after the page loads and the tool still works.",
+    a: "No. Every step — inspection, lossless metadata removal, remuxing and download — runs in your own browser using native file APIs and WebAssembly. Your photos and videos never leave your device, there is no server-side queue, and nothing is stored or logged. After the FFmpeg engine has loaded, processing needs no upload connection.",
   },
   {
-    q: "Which metadata does AI Label Remover strip?",
-    a: "All of it. Re-encoding produces a brand-new file containing only pixels, which removes C2PA content credentials, XMP packets (prompts, seeds, generator names), IPTC attribution fields, the full EXIF block including GPS coordinates, device serial numbers and timestamps, JPEG comment segments, and PNG tEXt, iTXt and zTXt chunks written by Stable Diffusion or ComfyUI.",
+    q: "Which image metadata does AI Label Remover strip?",
+    a: "The cleaner removes C2PA content credentials, XMP packets (prompts, seeds and generator names), IPTC attribution fields, EXIF including GPS, serial numbers and timestamps, JPEG comments, and PNG text chunks written by Stable Diffusion or ComfyUI. In Auto mode it preserves the original JPG, PNG or WebP encoded image data.",
   },
   {
     q: "Which AI generators does it work with?",
@@ -28,15 +28,11 @@ export const faqs: Faq[] = [
   },
   {
     q: "Can it remove an invisible watermark like SynthID?",
-    a: "No, and no metadata tool can. SynthID and similar watermarks are encoded into the pixels themselves rather than into the file’s metadata, so they survive re-encoding. The same applies to visual AI classifiers, which judge the picture rather than the file. This tool addresses the metadata trigger only.",
+    a: "No, and no metadata tool can promise that. Invisible watermarks may be encoded into image pixels, video frames or audio rather than file metadata, so they can survive re-encoding. The same applies to AI classifiers, which judge the content rather than the container. This tool addresses file-level metadata triggers only.",
   },
   {
     q: "Will cleaning reduce my image quality?",
-    a: "Not visibly. Images are re-encoded at 92% quality by default, which is above the point where JPEG artefacts become noticeable, and you can raise it to 100% or choose lossless PNG output. Dimensions are always preserved exactly.",
-  },
-  {
-    q: "What does the “reset fingerprint” option do?",
-    a: "It shifts a scattered subset of pixel values by ±1 RGB, which is invisible to the eye but changes the perceptual hash of the file. Platforms and reverse-image search use that hash to match a new upload against copies of the same image seen before, so resetting it stops a cleaned file being linked back to an earlier labelled version.",
+    a: "No. JPG, PNG and WebP metadata is removed without recompressing the encoded image, so pixels, dimensions and visual quality remain unchanged. AVIF and HEIC fall back to a lossless PNG export.",
   },
   {
     q: "Can it remove a label from a post that is already live?",
@@ -44,18 +40,26 @@ export const faqs: Faq[] = [
   },
   {
     q: "Is it legal to remove AI metadata from my images?",
-    a: "Removing metadata from files you own is legal in general, and is the same operation every social platform already performs on your uploads. What it does not do is remove your disclosure obligations: where a platform’s terms or a regulation such as the EU AI Act requires you to declare AI-generated content, you must still declare it. Use this to fix false positives and protect privacy, not to misrepresent synthetic media.",
+    a: "Laws vary by location and context, but cleaning metadata from files you own is commonly allowed. It does not remove disclosure, contract or platform-policy obligations: where rules require you to declare AI involvement, you must still do so. Use the tool for privacy and false-positive troubleshooting, not to misrepresent synthetic media.",
   },
   {
     q: "What file formats and sizes are supported?",
-    a: "JPG, PNG, WebP, AVIF and HEIC, up to 15MB per file, in batches of up to 30 images. AVIF and HEIC sources are exported as PNG or JPEG because browsers decode those formats but do not encode them. Animated GIF is not supported.",
+    a: "Images support JPG, PNG, WebP, AVIF and HEIC up to 15MB each. Videos support MP4, MOV, M4V and WebM up to 200MB each. MP4, MOV and M4V produce MP4; WebM stays WebM. Up to 30 mixed files can be queued, although video remuxing runs sequentially. Animated GIF is not supported.",
+  },
+  {
+    q: "How does video metadata cleaning work?",
+    a: "The browser loads a local WebAssembly build of FFmpeg and losslessly remuxes the primary video and optional audio stream into a clean container. Source metadata, chapters, attached thumbnails and non-primary streams are not copied, while the encoded video and audio are stream-copied without recompression. The video itself is never uploaded.",
+  },
+  {
+    q: "Will cleaning a video guarantee that its AI label disappears?",
+    a: "No. Video cleaning removes file-level metadata and provenance carried by the source container and streams, but a platform can still use invisible watermarks, content classifiers, perceptual matching, account history or an existing post record. The tool therefore reports metadata cleaning, not a guaranteed platform outcome.",
   },
 ];
 
 export const removedItems = [
   {
     title: "C2PA content credentials",
-    body: "The signed provenance manifest written by Firefly, ChatGPT Image, Gemini and Photoshop. This is the single record Meta’s automatic labeller trusts most.",
+    body: "A signed provenance manifest that tools such as Firefly, ChatGPT Image, Gemini and Photoshop may embed for machine-readable creation and edit history.",
   },
   {
     title: "XMP packets",
@@ -74,26 +78,26 @@ export const removedItems = [
     body: "tEXt, iTXt and zTXt chunks in which Stable Diffusion, Automatic1111, Forge and ComfyUI store the full generation workflow.",
   },
   {
-    title: "Perceptual fingerprint",
-    body: "Optional ±1 RGB dithering changes the hash used to match your upload against earlier copies of the same image across the web.",
+    title: "Video container metadata",
+    body: "Lossless video remuxing leaves source tags, chapters, attached thumbnails, extra streams and container provenance records behind without recompressing video or audio.",
   },
 ];
 
 export const steps = [
   {
-    title: "Drop your image",
-    body: "The file is read into browser memory with the File API. No network request is made — you can watch the network tab stay empty.",
+    title: "Drop your media",
+    body: "The photo or video is read into browser memory with the File API. Its contents are not sent to an upload endpoint.",
   },
   {
     title: "Inspect what is inside",
-    body: "The file’s container is parsed on the spot to list every C2PA, XMP, EXIF, IPTC and PNG-chunk record it carries, and to name the generator that wrote them.",
+    body: "Images are inspected on the spot for C2PA, XMP, EXIF, IPTC and PNG-chunk records. Videos begin a local WebAssembly remuxing job.",
   },
   {
-    title: "Decode and re-encode",
-    body: "The picture is decoded to raw pixels and encoded into a brand-new file. Metadata cannot survive that round trip, so every hidden record is gone in one pass.",
+    title: "Clean without quality loss",
+    body: "JPG, PNG and WebP metadata is stripped without recompression. Video and audio streams are copied into a clean container without re-encoding.",
   },
   {
     title: "Download and post",
-    body: "You get a clean file with identical dimensions, optionally with a reset fingerprint and placeholder camera EXIF, ready to upload anywhere.",
+    body: "You get a cleaned image or video download with original visual and audio quality. File-level metadata is removed, but watermarks and classifier signals may remain.",
   },
 ];

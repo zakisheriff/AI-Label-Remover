@@ -1,28 +1,32 @@
 "use client";
 
-import gsap from "gsap";
 import Image from "next/image";
 import Link from "next/link";
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { inspect, type Report } from "@/lib/metadata";
-import { cleanImage, upscaleImageBlob, DEFAULT_OPTIONS, type CleanOptions, type CleanResult } from "@/lib/clean";
+import { cleanImage, upscaleImageBlob, DEFAULT_OPTIONS, type CleanResult } from "@/lib/clean";
 import { createZip } from "@/lib/zip";
 import { MAX_BATCH, MAX_FILE_MB } from "@/lib/site";
+import { cleanVideo, createVideoThumbnail, MAX_VIDEO_FILE_MB, type VideoCleanResult } from "@/lib/video";
 
 type Status = "queued" | "working" | "done" | "error";
 
 type Item = {
   id: string;
+  kind: "image" | "video";
   name: string;
   size: number;
   status: Status;
+  progress?: number;
+  thumbnail?: string;
   report?: Report;
-  result?: CleanResult;
+  cleanedReport?: Report;
+  result?: CleanResult | VideoCleanResult;
   url?: string;
   error?: string;
 };
 
-const ACCEPT = "image/jpeg,image/png,image/webp,image/avif,image/heic,image/heif";
+const ACCEPT = "image/jpeg,image/png,image/webp,image/avif,image/heic,image/heif,video/mp4,video/quicktime,video/webm,video/x-m4v";
 
 function formatBytes(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
@@ -35,26 +39,56 @@ function cleanName(name: string, extension: string) {
   return `${base}-clean.${extension}`;
 }
 
+function aiMarkers(report: Report) {
+  return [...new Set([...report.findings.filter((finding) => finding.aiRelated).map((finding) => finding.kind), ...report.generators])];
+}
+
+function removedMetadata(report: Report) {
+  return [...new Set(report.findings.filter((finding) => finding.kind !== "ICC profile").map((finding) => finding.kind))];
+}
+
+function InspectionMessage({ source, cleaned, kind }: { source: Report; cleaned: Report; kind: Item["kind"] }) {
+  const sourceAi = aiMarkers(source);
+  const remainingAi = aiMarkers(cleaned);
+  if (sourceAi.length > 0 && remainingAi.length === 0) {
+    return (
+      <p className="mt-2 text-[12px] leading-[18px] text-[var(--foreground)]">
+        <strong>AI metadata found and removed:</strong> {sourceAi.join(" · ")}.
+      </p>
+    );
+  }
+  if (remainingAi.length > 0) {
+    return (
+      <p className="mt-2 text-[12px] leading-[18px] text-[var(--danger)]">
+        <strong>AI marker remains in the encoded media:</strong> {remainingAi.join(" · ")}. It was not recompressed, so quality stays unchanged.
+      </p>
+    );
+  }
+  const removed = removedMetadata(source);
+  return (
+    <p className="mt-2 text-[12px] leading-[18px] text-[var(--muted)]">
+      <strong className="text-[var(--foreground)]">No AI metadata marker detected.</strong>{" "}
+      {kind === "video"
+        ? "Standard container metadata was cleaned. This does not determine whether the video itself was AI-generated."
+        : `${removed.length > 0 ? `Removed other metadata: ${removed.join(" · ")}. ` : "No removable metadata was present. "}Original image quality was preserved.`}
+    </p>
+  );
+}
+
 export function Cleaner() {
   const [items, setItems] = useState<Item[]>([]);
-  const [options, setOptions] = useState<CleanOptions>(DEFAULT_OPTIONS);
-  const [showOptions, setShowOptions] = useState(false);
   const [dragging, setDragging] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
-  const [optionsMounted, setOptionsMounted] = useState(false);
   const [upscalingIds, setUpscalingIds] = useState<Record<string, boolean>>({});
   const [upscalingAll, setUpscalingAll] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const panelRef = useRef<HTMLDivElement>(null);
-  const optionsRef = useRef(options);
-  const formId = useId();
 
   const handleUpscale = useCallback(async (item: Item) => {
-    if (!item.result || !item.url) return;
+    if (item.kind !== "image" || !item.result || !item.url) return;
     setUpscalingIds((prev) => ({ ...prev, [item.id]: true }));
     try {
       const mime = item.result.mime;
-      const quality = optionsRef.current.quality;
+      const quality = DEFAULT_OPTIONS.quality;
       const res = await upscaleImageBlob(item.result.blob, mime, quality);
       
       const url = URL.createObjectURL(res.blob);
@@ -74,95 +108,68 @@ export function Cleaner() {
     }
   }, []);
 
-  // GSAP drives the options panel so it grows and collapses from its real
-  // height instead of popping in and vanishing on unmount. Mounting happens on
-  // the click; unmounting waits for the collapse tween to finish.
-  const toggleOptions = useCallback(() => {
-    setShowOptions((open) => {
-      if (!open) setOptionsMounted(true);
-      return !open;
-    });
-  }, []);
-
-  useEffect(() => {
-    const panel = panelRef.current;
-    if (!panel) return;
-
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const tween = showOptions
-      ? gsap.fromTo(
-          panel,
-          { height: 0, opacity: 0, y: -6, overflow: "hidden" },
-          {
-            height: "auto",
-            opacity: 1,
-            y: 0,
-            duration: reduced ? 0 : 0.42,
-            ease: "power3.out",
-            onComplete: () => gsap.set(panel, { clearProps: "height,overflow" }),
-          },
-        )
-      : gsap.to(panel, {
-          height: 0,
-          opacity: 0,
-          y: -6,
-          overflow: "hidden",
-          duration: reduced ? 0 : 0.3,
-          ease: "power2.inOut",
-          onComplete: () => setOptionsMounted(false),
-        });
-
-    return () => {
-      tween.kill();
-    };
-  }, [showOptions, optionsMounted]);
-
-  // A batch reads the options once per file, so the ref has to track the latest
-  // value without re-creating the processing callback mid-run.
-  useEffect(() => {
-    optionsRef.current = options;
-  }, [options]);
-
   const process = useCallback(async (files: File[]) => {
     setNotice(null);
-    const images = files.filter((file) => file.type.startsWith("image/") || /\.(jpe?g|png|webp|avif|heic|heif)$/i.test(file.name));
-    if (!images.length) {
-      setNotice("Those files are not images. Use JPG, PNG, WebP, AVIF or HEIC.");
+    const media = files.filter(
+      (file) =>
+        file.type.startsWith("image/") ||
+        file.type.startsWith("video/") ||
+        /\.(jpe?g|png|webp|avif|heic|heif|mp4|mov|m4v|webm)$/i.test(file.name),
+    );
+    if (!media.length) {
+      setNotice("Those files are not supported. Use JPG, PNG, WebP, AVIF, HEIC, MP4, MOV or WebM.");
       return;
     }
-    if (images.some((file) => /\.gif$/i.test(file.name))) {
+    if (media.some((file) => /\.gif$/i.test(file.name))) {
       setNotice("Animated GIF is not supported — only the first frame would survive re-encoding.");
     }
 
-    const accepted = images.slice(0, MAX_BATCH);
-    if (images.length > MAX_BATCH) setNotice(`Only the first ${MAX_BATCH} images were added.`);
+    const accepted = media.slice(0, MAX_BATCH);
+    if (media.length > MAX_BATCH) setNotice(`Only the first ${MAX_BATCH} files were added.`);
 
-    const queued: Item[] = accepted.map((file, index) => ({
-      id: `${Date.now()}-${index}-${file.name}`,
-      name: file.name,
-      size: file.size,
-      status: "queued",
-    }));
+    const queued: Item[] = accepted.map((file, index) => {
+      const kind = file.type.startsWith("video/") || /\.(mp4|mov|m4v|webm)$/i.test(file.name) ? "video" : "image";
+      return {
+        id: `${Date.now()}-${index}-${file.name}`,
+        kind,
+        name: file.name,
+        size: file.size,
+        status: "queued",
+      };
+    });
     setItems((prev) => [...queued, ...prev]);
 
     for (let i = 0; i < accepted.length; i++) {
       const file = accepted[i];
       const id = queued[i].id;
+      const kind = queued[i].kind;
       const update = (patch: Partial<Item>) =>
         setItems((prev) => prev.map((item) => (item.id === id ? { ...item, ...patch } : item)));
 
-      if (file.size > MAX_FILE_MB * 1024 * 1024) {
-        update({ status: "error", error: `Larger than ${MAX_FILE_MB}MB.` });
+      const limit = kind === "video" ? MAX_VIDEO_FILE_MB : MAX_FILE_MB;
+      if (file.size > limit * 1024 * 1024) {
+        update({ status: "error", error: `Larger than ${limit}MB.` });
         continue;
       }
 
       update({ status: "working" });
       try {
-        const report = inspect(await file.arrayBuffer());
-        const result = await cleanImage(file, optionsRef.current);
-        update({ status: "done", report, result, url: URL.createObjectURL(result.blob) });
+        if (kind === "video") {
+          const report = inspect(await file.arrayBuffer());
+          update({ report });
+          const result = await cleanVideo(file, (progress) => update({ progress }));
+          const cleanedReport = inspect(await result.blob.arrayBuffer());
+          const [url, thumbnail] = [URL.createObjectURL(result.blob), result.thumbnail ?? (await createVideoThumbnail(result.blob))];
+          update({ status: "done", progress: 1, report, cleanedReport, result, url, thumbnail });
+        } else {
+          const report = inspect(await file.arrayBuffer());
+          const result = await cleanImage(file, DEFAULT_OPTIONS);
+          const cleanedReport = inspect(await result.blob.arrayBuffer());
+          update({ status: "done", report, cleanedReport, result, url: URL.createObjectURL(result.blob) });
+        }
       } catch (error) {
-        update({ status: "error", error: error instanceof Error ? error.message : "Could not process this file." });
+        const message = error instanceof Error ? error.message : String(error);
+        update({ status: "error", error: message && message !== "[object Object]" ? message : "Could not process this file." });
       }
       // Yield between files so the browser can paint progress on a large batch.
       await new Promise((resolve) => setTimeout(resolve, 0));
@@ -216,6 +223,7 @@ export function Cleaner() {
   }, [process]);
 
   const done = useMemo(() => items.filter((item) => item.status === "done" && item.result), [items]);
+  const doneImages = useMemo(() => done.filter((item) => item.kind === "image"), [done]);
 
   const downloadAll = useCallback(async () => {
     const entries = await Promise.all(
@@ -235,9 +243,9 @@ export function Cleaner() {
   const downloadAllUpscaled = useCallback(async () => {
     setUpscalingAll(true);
     try {
-      const quality = optionsRef.current.quality;
+      const quality = DEFAULT_OPTIONS.quality;
       const entries = await Promise.all(
-        done.map(async (item) => {
+        doneImages.map(async (item) => {
           const res = await upscaleImageBlob(item.result!.blob, item.result!.mime, quality);
           const ext = item.result!.extension;
           const originalBase = item.name.replace(/\.[^.]+$/, "");
@@ -257,7 +265,7 @@ export function Cleaner() {
     } finally {
       setUpscalingAll(false);
     }
-  }, [done]);
+  }, [doneImages]);
       const reset = useCallback(() => {
         items.forEach((item) => item.url && URL.revokeObjectURL(item.url));
         setItems([]);
@@ -277,7 +285,7 @@ export function Cleaner() {
             <div
               role="button"
               tabIndex={0}
-              aria-label="Select images or press Enter to browse"
+              aria-label="Select images or videos, or press Enter to browse"
               onClick={() => inputRef.current?.click()}
               onKeyDown={(event) => {
                 if (event.key === "Enter" || event.key === " ") {
@@ -299,9 +307,9 @@ export function Cleaner() {
                   strokeLinejoin="round"
                 />
               </svg>
-              <p className="mt-3.5 text-[15px] font-medium hidden sm:block">Select or drop images</p>
-              <p className="mt-3.5 text-[15px] font-medium sm:hidden">Select images</p>
-              <p className="mt-1 text-[12.5px] text-[var(--muted)]">JPG · PNG · WebP · AVIF · HEIC</p>
+              <p className="mt-3.5 text-[15px] font-medium hidden sm:block">Select or drop images and videos</p>
+              <p className="mt-3.5 text-[15px] font-medium sm:hidden">Select images or videos</p>
+              <p className="mt-1 text-[12.5px] text-[var(--muted)]">Images · MP4 · MOV · WebM</p>
             </div>
 
             <input
@@ -321,70 +329,9 @@ export function Cleaner() {
               onClick={() => inputRef.current?.click()}
               className="mt-3.5 hidden sm:block w-full cursor-pointer rounded-[35px] bg-[var(--accent)] px-4 py-3.5 text-[15px] font-semibold text-white transition-colors hover:bg-[var(--accent-hover)]"
             >
-              Select images
+              Select images or videos
             </button>
 
-            <button
-              type="button"
-              aria-expanded={showOptions}
-              aria-controls={formId}
-              onClick={toggleOptions}
-              className="mt-4 w-full cursor-pointer text-center text-[13px] font-semibold text-[var(--link)] hover:opacity-70"
-            >
-              {showOptions ? "Hide options" : "Options"}
-            </button>
-
-            {optionsMounted && (
-              <div ref={panelRef} className="lg:absolute lg:left-0 lg:right-0 lg:z-10 pt-4">
-                <div id={formId} className="space-y-3 rounded-[24px] border border-[var(--border)] bg-[var(--surface)] p-5 text-[13px]">
-                  <label className="flex items-center justify-between gap-3">
-                    <span className="text-[var(--muted)]">Output format</span>
-                    <select
-                      value={options.output}
-                      onChange={(event) => setOptions({ ...options, output: event.target.value as CleanOptions["output"] })}
-                      className="rounded-[8px] border border-[var(--border)] bg-[var(--surface)] px-2 py-1 text-[13px]"
-                    >
-                      <option value="auto">Auto (match source)</option>
-                      <option value="jpeg">JPEG</option>
-                      <option value="png">PNG (lossless)</option>
-                      <option value="webp">WebP</option>
-                    </select>
-                  </label>
-
-                  <label className="flex items-center justify-between gap-3">
-                    <span className="text-[var(--muted)]">Quality — {Math.round(options.quality * 100)}%</span>
-                    <input
-                      type="range"
-                      min={60}
-                      max={100}
-                      value={Math.round(options.quality * 100)}
-                      onChange={(event) => setOptions({ ...options, quality: Number(event.target.value) / 100 })}
-                      className="h-1 accent-[var(--accent)]"
-                    />
-                  </label>
-
-                  <label className="flex items-center justify-between gap-3">
-                    <span className="text-[var(--muted)]">Reset fingerprint</span>
-                    <input
-                      type="checkbox"
-                      checked={options.resetFingerprint}
-                      onChange={(event) => setOptions({ ...options, resetFingerprint: event.target.checked })}
-                      className="h-4 w-4 cursor-pointer accent-[var(--accent)]"
-                    />
-                  </label>
-
-                  <label className="flex items-center justify-between gap-3">
-                    <span className="text-[var(--muted)]">Inject metadata EXIF</span>
-                    <input
-                      type="checkbox"
-                      checked={options.injectCameraExif}
-                      onChange={(event) => setOptions({ ...options, injectCameraExif: event.target.checked })}
-                      className="h-4 w-4 cursor-pointer accent-[var(--accent)]"
-                    />
-                  </label>
-                </div>
-              </div>
-            )}
           </div>
         );
       };
@@ -410,7 +357,10 @@ export function Cleaner() {
                   {items.map((item) => (
                     <li key={item.id} className="flex gap-3 p-4 items-start">
                       <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-[12px] border border-[var(--border)] bg-[var(--surface)]">
-                        {item.url ? (
+                        {item.kind === "video" && item.thumbnail ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={item.thumbnail} alt="" className="h-full w-full object-cover" />
+                        ) : item.kind === "image" && item.url ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img
                             src={item.url}
@@ -418,7 +368,14 @@ export function Cleaner() {
                             className="h-full w-full object-cover"
                           />
                         ) : (
-                          <div className="flex h-full w-full items-center justify-center bg-[var(--surface)]" />
+                          <div className="flex h-full w-full items-center justify-center bg-[var(--surface)] text-[var(--muted)]">
+                            {item.kind === "video" && (
+                              <svg viewBox="0 0 24 24" aria-hidden="true" className="h-6 w-6">
+                                <rect x="3" y="5" width="14" height="14" rx="2" fill="none" stroke="currentColor" strokeWidth="1.5" />
+                                <path d="m17 10 4-2v8l-4-2" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
+                              </svg>
+                            )}
+                          </div>
                         )}
                       </div>
 
@@ -431,7 +388,11 @@ export function Cleaner() {
                           <p className="mt-1 text-[12px] text-[var(--muted)]">Queued...</p>
                         )}
                         {item.status === "working" && (
-                          <p className="mt-1 text-[12px] text-[var(--muted)]">Cleaning...</p>
+                          <p className="mt-1 text-[12px] text-[var(--muted)]">
+                            {item.kind === "video"
+                              ? `Cleaning video locally${item.progress ? ` — ${Math.round(item.progress * 100)}%` : "…"}`
+                              : "Cleaning..."}
+                          </p>
                         )}
                         {item.status === "error" && (
                           <p className="mt-1 text-[12px] text-[var(--danger)] font-medium">
@@ -439,34 +400,26 @@ export function Cleaner() {
                           </p>
                         )}
 
-                        {item.status === "done" && item.report && item.result && (
+                        {item.status === "done" && item.kind === "image" && item.report && item.cleanedReport && item.result && (
                           <>
                             <p className="mt-1 text-[12px] text-[var(--muted)]">
                               {item.report.format} {formatBytes(item.size)} to {item.result.extension.toUpperCase()}{" "}
                               {formatBytes(item.result.blob.size)} · {item.result.width}×{item.result.height}
                             </p>
 
-                            {item.report.findings.length > 0 ? (
-                              <ul className="mt-2 flex flex-wrap gap-1.5">
-                                {item.report.findings.map((finding) => (
-                                  <li
-                                    key={finding.kind + finding.detail}
-                                    title={finding.detail}
-                                    className={`rounded-full px-2 py-0.5 text-[11px] font-medium line-through ${
-                                      finding.aiRelated
-                                        ? "bg-[color-mix(in_srgb,var(--danger)_12%,transparent)] text-[var(--danger)]"
-                                        : "bg-[color-mix(in_srgb,var(--foreground)_7%,transparent)] text-[var(--muted)]"
-                                    }`}
-                                  >
-                                    {finding.kind}
-                                  </li>
-                                ))}
-                              </ul>
-                            ) : (
-                              <p className="mt-2 text-[12px] text-[var(--muted)]">
-                                No embedded metadata found — the file was re-encoded anyway.
-                              </p>
-                            )}
+                            <InspectionMessage source={item.report} cleaned={item.cleanedReport} kind="image" />
+                          </>
+                        )}
+                        {item.status === "done" && item.kind === "video" && item.report && item.cleanedReport && item.result && (
+                          <>
+                            <p className="mt-1 text-[12px] text-[var(--muted)]">
+                              Lossless {item.result.extension.toUpperCase()} · original quality preserved
+                              {item.result.width > 0 ? ` · ${item.result.width}×${item.result.height}` : ""}
+                              {"duration" in item.result && item.result.duration > 0
+                                ? ` · ${Math.ceil(item.result.duration)}s`
+                                : ""}
+                            </p>
+                            <InspectionMessage source={item.report} cleaned={item.cleanedReport} kind="video" />
                           </>
                         )}
                       </div>
@@ -480,14 +433,16 @@ export function Cleaner() {
                           >
                             Download
                           </a>
-                          <button
-                            type="button"
-                            onClick={() => handleUpscale(item)}
-                            disabled={upscalingIds[item.id]}
-                            className="cursor-pointer rounded-[35px] border border-[var(--border)] bg-[var(--surface)] px-3 py-1.5 text-[11px] font-semibold text-[var(--foreground)] transition-colors hover:bg-[color-mix(in_srgb,var(--foreground)_5%,transparent)] disabled:opacity-50 disabled:cursor-not-allowed text-center"
-                          >
-                            {upscalingIds[item.id] ? "Upscaling..." : "Upscale 2x"}
-                          </button>
+                          {item.kind === "image" && (
+                            <button
+                              type="button"
+                              onClick={() => handleUpscale(item)}
+                              disabled={upscalingIds[item.id]}
+                              className="cursor-pointer rounded-[35px] border border-[var(--border)] bg-[var(--surface)] px-3 py-1.5 text-[11px] font-semibold text-[var(--foreground)] transition-colors hover:bg-[color-mix(in_srgb,var(--foreground)_5%,transparent)] disabled:opacity-50 disabled:cursor-not-allowed text-center"
+                            >
+                              {upscalingIds[item.id] ? "Upscaling..." : "Upscale 2x"}
+                            </button>
+                          )}
                         </div>
                       )}
                     </li>
@@ -505,14 +460,16 @@ export function Cleaner() {
                 >
                   Download all ({done.length}) as .zip
                 </button>
-                <button
-                  type="button"
-                  onClick={downloadAllUpscaled}
-                  disabled={upscalingAll}
-                  className="w-full cursor-pointer rounded-[35px] border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-[14px] font-semibold text-[var(--foreground)] transition-colors hover:bg-[color-mix(in_srgb,var(--foreground)_5%,transparent)] disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {upscalingAll ? "Upscaling all..." : `Download all upscaled (${done.length}) as .zip`}
-                </button>
+                {doneImages.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={downloadAllUpscaled}
+                    disabled={upscalingAll}
+                    className="w-full cursor-pointer rounded-[35px] border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-[14px] font-semibold text-[var(--foreground)] transition-colors hover:bg-[color-mix(in_srgb,var(--foreground)_5%,transparent)] disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {upscalingAll ? "Upscaling all..." : `Download all images upscaled (${doneImages.length}) as .zip`}
+                  </button>
+                )}
               </div>
             )}
 
@@ -530,10 +487,10 @@ export function Cleaner() {
         );
       };
 
-      const hasImages = items.length > 0;
+      const hasMedia = items.length > 0;
 
       return (
-        <div className="flex min-h-[100svh] flex-col w-full">
+        <div className={`flex flex-col w-full ${hasMedia ? "pb-8 lg:min-h-[100svh] lg:pb-0" : "min-h-[100svh]"}`}>
           {/* Header Row: Contains Logo & Github Button */}
           <header className="relative flex w-full flex-col items-center gap-4 px-6 pt-8 lg:flex-row lg:justify-between lg:px-14 lg:pt-10 lg:pb-2">
             <Link href="/">
@@ -557,7 +514,7 @@ export function Cleaner() {
             </a>
           </header>
 
-          <section className="relative flex flex-1 flex-col lg:flex-row lg:items-center lg:pb-20">
+          <section className={`relative flex flex-col lg:flex-1 lg:flex-row lg:items-center lg:pb-20 ${hasMedia ? "" : "flex-1"}`}>
             {/* Full-page drop veil, so a file can land anywhere on the site. */}
             {dragging && (
               <div className="fixed inset-0 z-50 flex items-center justify-center bg-[color-mix(in_srgb,var(--background)_82%,transparent)] backdrop-blur-[2px]">
@@ -569,13 +526,13 @@ export function Cleaner() {
             )}
 
           {/* LEFT COLUMN */}
-          <div className={`flex flex-1 flex-col px-6 pb-10 pt-4 lg:order-1 lg:px-14 lg:pt-0 ${hasImages ? "order-2" : "order-3"}`}>
-            <div className="mx-auto flex w-full max-w-[620px] flex-1 flex-col justify-center">
-              {!hasImages ? (
+          <div className={`flex flex-col px-6 pb-10 pt-4 lg:order-1 lg:flex-1 lg:px-14 lg:pt-0 ${hasMedia ? "order-2" : "order-3 flex-1"}`}>
+            <div className={`mx-auto flex w-full max-w-[620px] flex-col ${hasMedia ? "lg:flex-1 lg:justify-center" : "flex-1 justify-center"}`}>
+              {!hasMedia ? (
                 // State A: Empty State
                 <>
                   <h1 className="mt-8 text-balance text-center text-[34px] font-normal leading-[42px] tracking-[-0.02em] sm:text-[44px] sm:leading-[52px]">
-                    Post your photos without the{" "}
+                    Post your photos &amp; videos without the{" "}
                     <span className="whitespace-nowrap bg-[linear-gradient(90deg,#f9704f,#f0356f,#b83bff)] bg-clip-text font-medium text-transparent">
                       AI label
                     </span>
@@ -607,8 +564,8 @@ export function Cleaner() {
               ) : (
                 // State B: Active State (Input Zone moves to Left side)
                 <div className="w-full max-w-[400px] self-center">
-                  <h2 className="text-[19px] font-semibold leading-[26px] tracking-[-0.01em] sm:text-[24px] sm:leading-[30px]">
-                    Clean your image
+                  <h2 className="text-[19px] font-normal leading-[26px] tracking-[-0.01em] sm:text-[24px] sm:leading-[30px]">
+                    Clean your images and videos
                   </h2>
                   {renderUploadZone()}
                 </div>
@@ -617,19 +574,22 @@ export function Cleaner() {
           </div>
 
           {/* RIGHT COLUMN */}
-          <div className={`flex w-full items-center justify-center px-6 pb-4 pt-6 lg:order-2 lg:w-[38%] lg:min-w-[420px] lg:px-10 lg:pb-12 lg:pt-0 ${hasImages ? "order-3" : "order-2"}`}>
+          <div className={`flex w-full items-center justify-center px-6 pb-4 pt-6 lg:order-2 lg:w-[38%] lg:min-w-[420px] lg:px-10 lg:pb-12 lg:pt-0 ${hasMedia ? "order-3" : "order-2"}`}>
             <div className="w-full max-w-[400px]">
-              {!hasImages ? (
+              {!hasMedia ? (
                 // State A: Empty State (Upload Zone on Right side)
                 <>
-                  <h2 className="text-[19px] font-semibold leading-[26px] tracking-[-0.01em] sm:text-[24px] sm:leading-[30px]">
-                    Clean your image
+                  <h2 className="text-[19px] font-normal leading-[26px] tracking-[-0.01em] sm:text-[24px] sm:leading-[30px]">
+                    Clean your images and videos
                   </h2>
                   {renderUploadZone()}
                 </>
               ) : (
                 // State B: Active State (Cleaned Results List on Right side)
                 <>
+                  <h2 className="mb-4 text-[19px] font-normal leading-[26px] tracking-[-0.01em] sm:text-[24px] sm:leading-[30px]">
+                    Output
+                  </h2>
                   {renderResultsList()}
                 </>
               )}

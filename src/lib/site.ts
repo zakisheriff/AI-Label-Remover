@@ -3,9 +3,9 @@ export const site = {
   shortName: "AI Label Remover",
   url: "https://ailabelremover.theatom.lk",
   domain: "ailabelremover.theatom.lk",
-  tagline: "Remove the AI label from your photos — free, instant, private.",
+  tagline: "Clean AI metadata from photos and videos — free, private, in your browser.",
   description:
-    "Free browser-based AI label remover. Strip C2PA content credentials, XMP, EXIF, IPTC and PNG metadata that make Instagram, Facebook, TikTok and Pinterest tag your photo with “AI info” or “Made with AI”. Nothing is uploaded — 100% client-side.",
+    "Free browser-based image and video AI metadata cleaner. Losslessly clean photos, MP4, MOV and WebM files to remove C2PA, XMP, EXIF, IPTC and container metadata. Nothing is uploaded or recompressed — 100% client-side.",
   publisher: "The Atom",
   publisherUrl: "https://theatom.lk",
   email: "hello@theatom.lk",
@@ -26,6 +26,12 @@ export const site = {
     "tiktok ai generated label remover",
     "pinterest ai label remover",
     "strip metadata from image",
+    "video ai label remover",
+    "remove ai metadata from video",
+    "video metadata remover",
+    "remove c2pa from video",
+    "mp4 metadata cleaner",
+    "mov metadata remover",
   ],
 } as const;
 
