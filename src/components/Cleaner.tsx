@@ -8,6 +8,7 @@ import { cleanImage, upscaleImageBlob, DEFAULT_OPTIONS, type CleanResult } from 
 import { createZip } from "@/lib/zip";
 import { MAX_BATCH, MAX_FILE_MB, site } from "@/lib/site";
 import { cleanVideo, createVideoThumbnail, MAX_VIDEO_FILE_MB, type VideoCleanResult } from "@/lib/video";
+import { downloadFile } from "@/lib/download";
 
 type Status = "queued" | "working" | "done" | "error";
 
@@ -83,6 +84,12 @@ export function Cleaner() {
   const [upscalingAll, setUpscalingAll] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const handleDownload = useCallback((item: Item) => {
+    if (!item.result) return;
+    const fileName = cleanName(item.name, item.result.extension);
+    void downloadFile(item.result.blob, fileName);
+  }, []);
+
   const handleUpscale = useCallback(async (item: Item) => {
     if (item.kind !== "image" || !item.result || !item.url) return;
     setUpscalingIds((prev) => ({ ...prev, [item.id]: true }));
@@ -91,16 +98,11 @@ export function Cleaner() {
       const quality = DEFAULT_OPTIONS.quality;
       const res = await upscaleImageBlob(item.result.blob, mime, quality);
       
-      const url = URL.createObjectURL(res.blob);
-      const link = document.createElement("a");
-      link.href = url;
-      
       const ext = item.result.extension;
       const originalBase = item.name.replace(/\.[^.]+$/, "");
-      link.download = `${originalBase}-clean-2x.${ext}`;
+      const fileName = `${originalBase}-clean-2x.${ext}`;
       
-      link.click();
-      setTimeout(() => URL.revokeObjectURL(url), 15_000);
+      await downloadFile(res.blob, fileName);
     } catch (error) {
       alert(error instanceof Error ? error.message : "Upscaling failed.");
     } finally {
@@ -232,12 +234,8 @@ export function Cleaner() {
         data: new Uint8Array(await item.result!.blob.arrayBuffer()),
       })),
     );
-    const url = URL.createObjectURL(createZip(entries));
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "ai-label-remover-clean.zip";
-    link.click();
-    setTimeout(() => URL.revokeObjectURL(url), 30_000);
+    const zipBlob = createZip(entries);
+    await downloadFile(zipBlob, "ai-label-remover-clean.zip");
   }, [done]);
 
   const downloadAllUpscaled = useCallback(async () => {
@@ -254,12 +252,8 @@ export function Cleaner() {
           return { name, data };
         })
       );
-      const url = URL.createObjectURL(createZip(entries));
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = "ai-label-remover-clean-upscaled.zip";
-      link.click();
-      setTimeout(() => URL.revokeObjectURL(url), 30_000);
+      const zipBlob = createZip(entries);
+      await downloadFile(zipBlob, "ai-label-remover-clean-upscaled.zip");
     } catch (error) {
       alert(error instanceof Error ? error.message : "Upscaling all failed.");
     } finally {
@@ -426,13 +420,13 @@ export function Cleaner() {
 
                       {item.status === "done" && item.url && item.result && (
                         <div className="flex flex-col gap-1.5 items-stretch shrink-0 min-w-[90px]">
-                          <a
-                            href={item.url}
-                            download={cleanName(item.name, item.result.extension)}
+                          <button
+                            type="button"
+                            onClick={() => handleDownload(item)}
                             className="cursor-pointer rounded-[35px] bg-[var(--accent)] px-3 py-1.5 text-[12.5px] font-semibold text-white transition-colors hover:bg-[var(--accent-hover)] text-center"
                           >
                             Download
-                          </a>
+                          </button>
                           {item.kind === "image" && (
                             <button
                               type="button"
