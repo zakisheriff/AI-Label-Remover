@@ -1,75 +1,19 @@
 "use client";
 
-import { useEffect, useRef } from "react";
-import gsap from "gsap";
+import { GlassButton, GlassSheet } from "@zakisheriff/liquid-glass";
 
 type ModalType = "disclaimer" | "privacy" | null;
 
 export function InfoModal({ type, onClose }: { type: ModalType; onClose: () => void }) {
-  const backdropRef = useRef<HTMLDivElement>(null);
-  const panelRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!type) return;
-
-    // Set initial states
-    gsap.set(backdropRef.current, { opacity: 0 });
-    gsap.set(panelRef.current, { y: 30, scale: 0.96, opacity: 0 });
-
-    // Animate in
-    gsap.to(backdropRef.current, {
-      opacity: 1,
-      duration: 0.3,
-      ease: "power2.out",
-    });
-
-    gsap.to(panelRef.current, {
-      y: 0,
-      scale: 1,
-      opacity: 1,
-      duration: 0.4,
-      ease: "back.out(1.1)",
-      delay: 0.05,
-    });
-  }, [type]);
-
-  const handleClose = () => {
-    // Animate out
-    gsap.to(panelRef.current, {
-      y: 20,
-      scale: 0.96,
-      opacity: 0,
-      duration: 0.25,
-      ease: "power2.in",
-    });
-
-    gsap.to(backdropRef.current, {
-      opacity: 0,
-      duration: 0.25,
-      ease: "power2.inOut",
-      onComplete: onClose,
-    });
-  };
-
-  if (!type) return null;
-
   return (
-    <div
-      ref={backdropRef}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-[color-mix(in_srgb,var(--background)_80%,transparent)] p-4 backdrop-blur-[4px]"
-      onClick={handleClose}
+    <GlassSheet
+      open={type !== null}
+      onClose={onClose}
+      aria-label={type === "privacy" ? "Privacy Policy" : "Disclaimer"}
     >
-      <div
-        ref={panelRef}
-        className="relative max-h-[85vh] w-full max-w-[620px] overflow-y-auto rounded-[24px] border border-[var(--border)] bg-[var(--surface)] p-6 shadow-2xl sm:p-8"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <button
-          onClick={handleClose}
-          className="absolute right-6 top-6 cursor-pointer text-[14px] font-semibold text-[var(--muted)] hover:opacity-75 focus:outline-none"
-        >
-          Close
-        </button>
+      {/* The sheet sizes itself to its content, so the scroller is capped here
+          to keep a long policy inside the viewport instead of past its edge. */}
+      <div className="custom-scrollbar max-h-[65svh] overflow-y-auto overscroll-contain px-6 pb-6 pt-1 sm:px-8">
 
         {type === "disclaimer" && (
           <div>
@@ -139,6 +83,11 @@ export function InfoModal({ type, onClose }: { type: ModalType; onClose: () => v
           </div>
         )}
       </div>
-    </div>
+      <div className="flex justify-end px-6 pb-6 sm:px-8">
+        <GlassButton type="button" variant="clear" size="sm" onClick={onClose}>
+          Close
+        </GlassButton>
+      </div>
+    </GlassSheet>
   );
 }

@@ -5,6 +5,7 @@ import { Analytics } from "@vercel/analytics/next";
 import { site } from "@/lib/site";
 import { faqs } from "@/lib/content";
 import { TryNowButton } from "@/components/TryNowButton";
+import "@zakisheriff/liquid-glass/styles.css";
 import "./globals.css";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });

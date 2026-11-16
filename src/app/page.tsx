@@ -5,6 +5,7 @@ import { FaqAccordion } from "@/components/FaqAccordion";
 import { FooterLinks } from "@/components/FooterLinks";
 import { faqs, removedItems, steps } from "@/lib/content";
 import { site } from "@/lib/site";
+import { GlassCard } from "@zakisheriff/liquid-glass";
 
 export const metadata: Metadata = {
   title: "Free AI Label Remover for Photos & Videos — No Login",
@@ -45,9 +46,11 @@ export default function HomePage() {
 
           <ul className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
             {platforms.map((platform) => (
-              <li key={platform.name} className="rounded-[24px] border border-[var(--border)] bg-[var(--surface)] p-4">
-                <p className="text-[13px] font-semibold">{platform.name}</p>
-                <p className="mt-0.5 text-[12px] text-[var(--muted)]">{platform.label}</p>
+              <li key={platform.name}>
+                <GlassCard padding="16px" radius="24px" className="h-full">
+                  <p className="text-[13px] font-semibold">{platform.name}</p>
+                  <p className="mt-0.5 text-[12px] text-[var(--muted)]">{platform.label}</p>
+                </GlassCard>
               </li>
             ))}
           </ul>
@@ -73,10 +76,10 @@ export default function HomePage() {
           <h2 className="text-[22px] font-semibold leading-[30px] tracking-[-0.01em]">What gets removed</h2>
           <div className="mt-5 grid gap-3 sm:grid-cols-2">
             {removedItems.map((item) => (
-              <div key={item.title} className="rounded-[24px] border border-[var(--border)] bg-[var(--surface)] p-5">
+              <GlassCard key={item.title} padding="20px" radius="24px" className="h-full">
                 <h3 className="text-[14px] font-semibold">{item.title}</h3>
                 <p className="mt-1.5 text-[13px] leading-[20px] text-[var(--muted)]">{item.body}</p>
-              </div>
+              </GlassCard>
             ))}
           </div>
         </section>
@@ -122,14 +125,14 @@ export default function HomePage() {
         </section>
 
         <section className="pt-14">
-          <div className="rounded-[24px] border border-[var(--border)] bg-[var(--surface)] p-6">
+          <GlassCard padding="24px" radius="24px">
             <h2 className="text-[15px] font-semibold">What this tool cannot do</h2>
             <p className="mt-2 text-[13px] leading-[21px] text-[var(--muted)]">
               It cannot remove an invisible watermark embedded in image pixels, video frames or audio, it cannot change how a
               classifier reads the content, and it cannot lift a label from a post that is already published. It also
               does not replace disclosure where a platform&rsquo;s terms or a law such as the EU AI Act require it. <FooterLinks />
             </p>
-          </div>
+          </GlassCard>
         </section>
       </div>
     </main>

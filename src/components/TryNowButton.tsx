@@ -1,11 +1,12 @@
 "use client";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { GlassButton } from "@zakisheriff/liquid-glass";
 
 export function TryNowButton() {
   const pathname = usePathname();
+  const router = useRouter();
   const isHome = pathname === "/";
   const [isVisible, setIsVisible] = useState(false);
 
@@ -34,31 +35,34 @@ export function TryNowButton() {
     });
   };
 
-  const baseClasses = `fixed top-4 right-4 sm:top-6 sm:right-6 z-40 cursor-pointer rounded-[35px] bg-[var(--accent)] px-5.5 py-3 text-[14px] font-semibold text-white shadow-lg transition-all duration-300 hover:bg-[var(--accent-hover)] active:scale-95 sm:px-5 sm:py-2.5`;
-
   const show = isHome ? isVisible : true;
 
-  if (isHome) {
-    return (
-      <button
-        onClick={scrollToTop}
-        className={`${baseClasses} ${
-          show ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4 pointer-events-none"
-        }`}
-      >
-        Try now
-      </button>
-    );
-  }
+  const wrapperClasses = `fixed top-4 right-4 sm:top-6 sm:right-6 z-40 transition-all duration-300 ${
+    show ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4 pointer-events-none"
+  }`;
 
   return (
-    <Link
-      href="/"
-      className={`${baseClasses} ${
-        show ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-4"
-      }`}
-    >
-      Try now
-    </Link>
+    <div className={wrapperClasses}>
+      {isHome ? (
+        <GlassButton variant="filled" tint="var(--accent)" onClick={scrollToTop}>
+          Try now
+        </GlassButton>
+      ) : (
+        <GlassButton
+          variant="filled"
+          tint="var(--accent)"
+          href="/"
+          onClick={(event) => {
+            // Keep client-side navigation for a plain click; let cmd/ctrl or
+            // middle clicks fall through to the real anchor.
+            if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return;
+            event.preventDefault();
+            router.push("/");
+          }}
+        >
+          Try now
+        </GlassButton>
+      )}
+    </div>
   );
 }

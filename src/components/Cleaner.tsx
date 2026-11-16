@@ -9,6 +9,7 @@ import { createZip } from "@/lib/zip";
 import { MAX_BATCH, MAX_FILE_MB, site } from "@/lib/site";
 import { cleanVideo, createVideoThumbnail, MAX_VIDEO_FILE_MB, type VideoCleanResult } from "@/lib/video";
 import { downloadFile } from "@/lib/download";
+import { GlassButton, GlassCard } from "@zakisheriff/liquid-glass";
 
 type Status = "queued" | "working" | "done" | "error";
 
@@ -270,13 +271,18 @@ export function Cleaner() {
         return (
           <div className="relative w-full">
             {notice && (
-              <div className="mt-4 rounded-[24px] bg-[color-mix(in_srgb,var(--danger)_8%,transparent)] p-4 text-[13px] leading-[19px] text-[var(--danger)]">
+              <GlassCard
+                padding="16px"
+                radius="24px"
+                tint="color-mix(in srgb, var(--danger) 18%, transparent)"
+                className="mt-4 text-[13px] leading-[19px] text-[var(--danger)]"
+              >
                 <p className="font-semibold">Notice</p>
                 <p className="mt-0.5">{notice}</p>
-              </div>
+              </GlassCard>
             )}
 
-            <div
+            <GlassCard
               role="button"
               tabIndex={0}
               aria-label="Select images or videos, or press Enter to browse"
@@ -289,7 +295,9 @@ export function Cleaner() {
               }}
               onDragOver={(event) => event.preventDefault()}
               onDrop={onDrop}
-              className="mt-5 flex cursor-pointer flex-col items-center justify-center rounded-[24px] border border-[var(--border)] bg-[var(--surface)] px-4 py-14 text-center transition-colors hover:border-[color-mix(in_srgb,var(--foreground)_35%,transparent)]"
+              padding="56px 16px"
+              radius="24px"
+              className="mt-5 flex cursor-pointer flex-col items-center justify-center text-center"
             >
               <svg viewBox="0 0 24 24" aria-hidden="true" className="h-8 w-8 text-[var(--muted)]">
                 <path
@@ -304,7 +312,7 @@ export function Cleaner() {
               <p className="mt-3.5 text-[15px] font-medium hidden sm:block">Select or drop images and videos</p>
               <p className="mt-3.5 text-[15px] font-medium sm:hidden">Select images or videos</p>
               <p className="mt-1 text-[12.5px] text-[var(--muted)]">Images · MP4 · MOV · WebM</p>
-            </div>
+            </GlassCard>
 
             <input
               ref={inputRef}
@@ -318,13 +326,18 @@ export function Cleaner() {
               }}
             />
 
-            <button
-              type="button"
-              onClick={() => inputRef.current?.click()}
-              className="mt-3.5 hidden sm:block w-full cursor-pointer rounded-[35px] bg-[var(--accent)] px-4 py-3.5 text-[15px] font-semibold text-white transition-colors hover:bg-[var(--accent-hover)]"
-            >
-              Select images or videos
-            </button>
+            <div className="mt-3.5 hidden sm:block">
+              <GlassButton
+                type="button"
+                variant="filled"
+                tint="var(--accent)"
+                size="lg"
+                onClick={() => inputRef.current?.click()}
+                className="w-full"
+              >
+                Select images or videos
+              </GlassButton>
+            </div>
 
           </div>
         );
@@ -333,17 +346,14 @@ export function Cleaner() {
       const renderResultsList = () => {
         return (
           <div className="w-full">
-            <div className="rounded-[24px] border border-[var(--border)] bg-[var(--surface)] overflow-hidden">
-              <div className="flex items-center justify-between border-b border-[var(--border)] p-4 font-semibold text-[14px]">
+            <GlassCard padding="0px" radius="24px" className="overflow-hidden">
+              <div className="flex items-center justify-between gap-3 border-b border-[var(--border)] p-3 pl-4 font-semibold text-[14px]">
                 <span>
                   {done.length} of {items.length} cleaned
                 </span>
-                <button
-                  onClick={reset}
-                  className="text-[var(--link)] hover:opacity-70 cursor-pointer font-semibold text-[13px]"
-                >
+                <GlassButton type="button" variant="clear" size="sm" destructive onClick={reset}>
                   Clear
-                </button>
+                </GlassButton>
               </div>
 
               <div className="max-h-[420px] overflow-y-scroll custom-scrollbar">
@@ -420,22 +430,24 @@ export function Cleaner() {
 
                       {item.status === "done" && item.url && item.result && (
                         <div className="flex flex-col gap-1.5 items-stretch shrink-0 min-w-[90px]">
-                          <button
+                          <GlassButton
                             type="button"
+                            variant="filled"
+                            tint="var(--accent)"
+                            size="sm"
                             onClick={() => handleDownload(item)}
-                            className="cursor-pointer rounded-[35px] bg-[var(--accent)] px-3 py-1.5 text-[12.5px] font-semibold text-white transition-colors hover:bg-[var(--accent-hover)] text-center"
                           >
                             Download
-                          </button>
+                          </GlassButton>
                           {item.kind === "image" && (
-                            <button
+                            <GlassButton
                               type="button"
+                              size="sm"
                               onClick={() => handleUpscale(item)}
                               disabled={upscalingIds[item.id]}
-                              className="cursor-pointer rounded-[35px] border border-[var(--border)] bg-[var(--surface)] px-3 py-1.5 text-[11px] font-semibold text-[var(--foreground)] transition-colors hover:bg-[color-mix(in_srgb,var(--foreground)_5%,transparent)] disabled:opacity-50 disabled:cursor-not-allowed text-center"
                             >
                               {upscalingIds[item.id] ? "Upscaling..." : "Upscale 2x"}
-                            </button>
+                            </GlassButton>
                           )}
                         </div>
                       )}
@@ -443,26 +455,28 @@ export function Cleaner() {
                   ))}
                 </ul>
               </div>
-            </div>
+            </GlassCard>
 
             {done.length > 1 && (
               <div className="mt-3 flex flex-col gap-2">
-                <button
+                <GlassButton
                   type="button"
+                  variant="filled"
+                  tint="var(--accent)"
                   onClick={downloadAll}
-                  className="w-full cursor-pointer rounded-[35px] bg-[var(--accent)] px-4 py-3 text-[14px] font-semibold text-white transition-colors hover:bg-[var(--accent-hover)]"
+                  className="w-full"
                 >
                   Download all ({done.length}) as .zip
-                </button>
+                </GlassButton>
                 {doneImages.length > 1 && (
-                  <button
+                  <GlassButton
                     type="button"
                     onClick={downloadAllUpscaled}
                     disabled={upscalingAll}
-                    className="w-full cursor-pointer rounded-[35px] border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-[14px] font-semibold text-[var(--foreground)] transition-colors hover:bg-[color-mix(in_srgb,var(--foreground)_5%,transparent)] disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full"
                   >
                     {upscalingAll ? "Upscaling all..." : `Download all images upscaled (${doneImages.length}) as .zip`}
-                  </button>
+                  </GlassButton>
                 )}
               </div>
             )}
@@ -498,24 +512,33 @@ export function Cleaner() {
                 className="dark:invert"
               />
             </Link>
-            <a
-              href="https://github.com/zakisheriff/AI-Label-Remover"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="absolute right-6 top-8 lg:static flex items-center gap-1.5 rounded-full border border-[var(--border)] bg-[var(--surface)] px-3 py-1.5 text-[12px] font-semibold transition-colors hover:bg-[color-mix(in_srgb,var(--foreground)_5%,transparent)] sm:text-[13px] sm:px-4 sm:py-2"
-            >
-              <span>Star on GitHub</span>
-            </a>
+            {/* The glass host owns its own positioning, so the layout lives on
+                a wrapper rather than on the button itself. */}
+            <div className="absolute right-6 top-8 lg:static">
+              <GlassButton
+                href="https://github.com/zakisheriff/AI-Label-Remover"
+                target="_blank"
+                rel="noopener noreferrer"
+                size="sm"
+              >
+                Star on GitHub
+              </GlassButton>
+            </div>
           </header>
 
           <section className={`relative flex flex-col lg:flex-1 lg:flex-row lg:items-center lg:pb-20 ${hasMedia ? "" : "flex-1"}`}>
             {/* Full-page drop veil, so a file can land anywhere on the site. */}
             {dragging && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center bg-[color-mix(in_srgb,var(--background)_82%,transparent)] backdrop-blur-[2px]">
-                <div className="rounded-[24px] border-2 border-dashed border-[var(--accent)] px-10 py-8 text-center">
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-[color-mix(in_srgb,var(--background)_55%,transparent)]">
+                <GlassCard
+                  padding="32px 40px"
+                  radius="28px"
+                  tint="color-mix(in srgb, var(--accent) 14%, transparent)"
+                  className="text-center"
+                >
                   <p className="text-[17px] font-semibold text-[var(--accent)]">Drop to clean</p>
                   <p className="mt-1 text-[13px] text-[var(--muted)]">Release anywhere on the page</p>
-                </div>
+                </GlassCard>
               </div>
             )}
 
