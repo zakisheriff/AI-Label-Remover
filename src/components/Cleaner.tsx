@@ -10,6 +10,7 @@ import { MAX_BATCH, MAX_FILE_MB, site } from "@/lib/site";
 import { cleanVideo, createVideoThumbnail, MAX_VIDEO_FILE_MB, type VideoCleanResult } from "@/lib/video";
 import { downloadFile } from "@/lib/download";
 import { GlassButton, GlassCard } from "@zakisheriff/liquid-glass";
+import { TryNowPill } from "@/components/TryNowButton";
 
 type Status = "queued" | "working" | "done" | "error";
 
@@ -500,30 +501,39 @@ export function Cleaner() {
       return (
         <div className={`flex flex-col w-full ${hasMedia ? "pb-8 lg:min-h-[100svh] lg:pb-0" : "min-h-[100svh]"}`}>
           {/* Header Row: Contains Logo & Github Button */}
-          <header className="relative flex w-full flex-col items-center gap-4 px-6 pt-8 lg:flex-row lg:justify-between lg:px-14 lg:pt-10 lg:pb-2">
-            <Link href="/">
-              <Image
-                src="/website-logo.webp"
-                alt="AI Label Remover"
-                width={800}
-                height={490}
-                priority
-                style={{ height: "56px", width: "auto" }}
-                className="dark:invert"
-              />
-            </Link>
-            {/* The glass host owns its own positioning, so the layout lives on
-                a wrapper rather than on the button itself. */}
-            <div className="absolute right-6 top-8 lg:static">
-              <GlassButton
-                href="https://github.com/zakisheriff/AI-Label-Remover"
-                target="_blank"
-                rel="noopener noreferrer"
-                size="sm"
-              >
-                Star on GitHub
-              </GlassButton>
-            </div>
+          {/* One pinned row for the whole top: logo on the left, the GitHub
+              button and the scroll-up pill on the right, so nothing can land
+              on top of anything else. */}
+          <header className="sticky top-0 z-40 w-full px-4 pt-3 lg:px-8 lg:pt-4">
+            <GlassCard
+              padding="8px 12px"
+              radius="999px"
+              className="mx-auto flex w-full max-w-[1280px] items-center justify-between gap-3 lg:px-4"
+            >
+              <Link href="/" className="shrink-0">
+                <Image
+                  src="/website-logo.webp"
+                  alt="AI Label Remover"
+                  width={800}
+                  height={490}
+                  priority
+                  style={{ height: "40px", width: "auto" }}
+                  className="dark:invert"
+                />
+              </Link>
+              <div className="relative flex shrink-0 items-center gap-2">
+                <TryNowPill />
+                <GlassButton
+                  href="https://github.com/zakisheriff/AI-Label-Remover"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  size="sm"
+                >
+                  <span className="hidden sm:inline">Star on GitHub</span>
+                  <span className="sm:hidden">GitHub</span>
+                </GlassButton>
+              </div>
+            </GlassCard>
           </header>
 
           <section className={`relative flex flex-col lg:flex-1 lg:flex-row lg:items-center lg:pb-20 ${hasMedia ? "" : "flex-1"}`}>
