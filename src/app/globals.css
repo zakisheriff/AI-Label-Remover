@@ -139,3 +139,93 @@ label:has(input[type="checkbox"]),
     background: #777777;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Top-right action pill.
+   One glass shell that links to GitHub at the top of the page and morphs into
+   a filled "Try now" button once the tool has scrolled past: the shell glides
+   between the two measured label widths while the labels cross-fade.
+   --------------------------------------------------------------------------- */
+.top-action.lg-glass {
+  --morph: 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 40;
+  width: var(--star-width, 151px);
+  height: 44px;
+  border-radius: 22px;
+  overflow: hidden;
+  transition:
+    width var(--morph),
+    background-color var(--morph),
+    box-shadow var(--morph);
+}
+
+@media (min-width: 640px) {
+  .top-action.lg-glass {
+    top: 24px;
+    right: 24px;
+  }
+}
+
+.top-action.lg-glass.is-try {
+  --lg-glass-fill: var(--accent);
+  --lg-glow: rgb(255 255 255 / 0.24);
+  width: var(--try-width, 104px);
+}
+
+.top-action__label {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  padding: 0 20px;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 19px;
+  white-space: nowrap;
+  transition:
+    opacity 0.35s ease,
+    transform var(--morph),
+    filter 0.35s ease;
+}
+
+.top-action__label--star {
+  color: var(--foreground);
+}
+
+.top-action__label--try {
+  color: #fff;
+  opacity: 0;
+  transform: translateX(14px);
+  filter: blur(4px);
+  pointer-events: none;
+}
+
+.top-action.is-try .top-action__label--star {
+  opacity: 0;
+  transform: translateX(-14px);
+  filter: blur(4px);
+  pointer-events: none;
+}
+
+.top-action.is-try .top-action__label--try {
+  opacity: 1;
+  transform: none;
+  filter: none;
+  pointer-events: auto;
+  transition-delay: 0.08s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .top-action.lg-glass,
+  .top-action__label {
+    transition-duration: 0.01ms;
+    transition-delay: 0s;
+  }
+}
